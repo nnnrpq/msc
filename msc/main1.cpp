@@ -45,6 +45,7 @@ int main() {
 
 	/// Load an image
 	src = imread(input_image, CV_LOAD_IMAGE_GRAYSCALE);
+	src = src;
 	//src_gray = src.clone();
 	if (!src.data)
 	{
