@@ -33,6 +33,9 @@
     <ClInclude Include="region_of_interest.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Generate_Image.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Image_PreProcessing.cpp">
@@ -48,6 +51,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="region_of_interest.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Test_Generate.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

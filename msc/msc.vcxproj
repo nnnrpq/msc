@@ -152,6 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dirent.h" />
+    <ClInclude Include="Generate_Image.h" />
     <ClInclude Include="Image_PreProcessing.h" />
     <ClInclude Include="Learn_Image.h" />
     <ClInclude Include="MSC.h" />
@@ -163,6 +164,7 @@
     <ClCompile Include="main1.cpp" />
     <ClCompile Include="MSC.cpp" />
     <ClCompile Include="region_of_interest.cpp" />
+    <ClCompile Include="Test_Generate.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
