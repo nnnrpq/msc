@@ -22,11 +22,32 @@ struct filename_struct {
 	char filename[200];
 };
 int main() {
+		double Thresh_VAL = 100;
+		double MAX_VAL = 1;
+
 	Mat test = imread("template.jpg");
 	double theta, xtran, ytran, scale;
 	imshow("template", test);
 	Mat result = Rand_Transform(test, theta, xtran, ytran, scale);
 	imshow("random image", result);
+	waitKey();
+
+	Mat mem_img_gray = test;
+				Mat mem_img_canny = CannyThreshold_MemoryImages(mem_img_gray);
+	
+	
+				// Since the image pixel values should be between 0 and 1, as a result,
+				// reflecting the values of g, thus, performing the edge detection function.
+				Mat mem_img_edge(mem_img_canny.rows, mem_img_canny.cols, CV_32FC1);
+				threshold(mem_img_canny, mem_img_edge, Thresh_VAL, MAX_VAL, THRESH_BINARY);
+				//printf("Edge detect of memory image %d done Size is (%d, %d)\n", i, mem_img_edge.rows, mem_img_edge.cols);
+	
+	
+				// Store all of the edge detected images in the vector.
+				// Reshape the matrices to just a single row and push these
+				// values to the Memory_Images matrix variable.
+				cropped_memory_images.push_back(mem_img_edge);
+
 	return 0;
 }
 //

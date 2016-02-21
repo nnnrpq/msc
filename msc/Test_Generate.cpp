@@ -1,13 +1,15 @@
 #include <iostream>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include <time.h>       /* time */
 
 using namespace std;
 using namespace cv;
 
 #define PI 3.14159265
 int acc = 1000;		/*accuracy of the image transformation, e.g. step size between random variable*/
-int maxscale = 2;	/*maximum scaling factor*/
+double maxscale = 1;	/*maximum scaling factor*/
+double minscale = 0.1;	/*minimum scaling factor*/
 
 Mat Combine_Transform(Mat t1, Mat t2) {
 	/*apply t1 and then t2, the combined transformation matrix is returned*/
@@ -24,10 +26,12 @@ Mat Combine_Transform(Mat t1, Mat t2) {
 }
 
 Mat Rand_Transform(Mat src, double & theta, double & xtranslate, double & ytranslate, double & scale) {
-	theta = double(rand() % acc)/acc*2*PI-PI;		/*the possible theta is -pi:2pi/acc:pi*/
-	xtranslate = double(rand() % acc)/acc * 2 * src.cols - src.cols;		/*xtranslate -cols:2cols/acc:cols */
-	ytranslate = double(rand() % acc)/acc * 2 * src.rows - src.rows;		/*ytranslate -rows:2rows/acc:rows */
-	scale = double(rand() % acc)/acc*maxscale;
+	srand(time(NULL));
+	int x = rand();
+	theta = double(rand() % acc)/acc*2*180-180;		/*the possible theta is -180:360/acc:180*/
+	xtranslate = double(rand() % acc)/acc * src.cols - round(0.5*src.cols);		/*xtranslate -0.5cols:cols/acc:0.5cols */
+	ytranslate = double(rand() % acc)/acc * src.rows - round(0.5*src.rows);		/*ytranslate -0.5rows:rows/acc:0.5rows */
+	scale = double(rand() % acc)/acc*(maxscale-minscale)+minscale;
 
 	Mat Rot = getRotationMatrix2D(Point2f(round(src.cols / 2), round(src.rows / 2)), theta, scale);
 	Mat Translate = (Mat_<double>(2, 3) << 1, 0, xtranslate, 0, 1, ytranslate);
@@ -35,7 +39,7 @@ Mat Rand_Transform(Mat src, double & theta, double & xtranslate, double & ytrans
 	Mat T = Combine_Transform(Translate,Rot);
 
 	Mat result;
-	warpAffine(src, result, T, Size(src.cols, src.rows), 0);
+	warpAffine(src, result, T, Size(src.cols, src.rows));
 
 	return result;
 }
