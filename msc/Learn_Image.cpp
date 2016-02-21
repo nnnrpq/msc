@@ -4,16 +4,18 @@
 //
 //  Created by Rohit Shukla on 7/21/15.
 //
-//
+//	Modified by Zhangyuan Wang
+//	Feb 21, add feature detector, matching and computing
 
 #include <stdio.h>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
-//#include "opencv2/features2d/features2d.hpp"
-//#include "opencv2/nonfree/features2d.hpp"
-//#include "opencv2/nonfree/nonfree.hpp"
+#include "opencv2/features2d/features2d.hpp"
+#include "opencv2/nonfree/features2d.hpp"
+#include "opencv2/nonfree/nonfree.hpp"
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/flann/flann.hpp"
+#include "opencv2/video/tracking.hpp"
 
 #include <stdlib.h>
 #include <iostream>
@@ -51,7 +53,7 @@ Mat Learn_New_Transformation(Mat Input_Image, Mat Memory_Images, vector<int> row
 
 Mat Image_Match(Mat img_object, Mat img_scene){
     Mat perspective_transformation = (Mat_<double>(3,3) << 0, -1, 0, -1, 5, -1, 0, -1, 0);
-    /*
+    
     if( !img_object.data || !img_scene.data )
     { std::cout<< " --(!) Error reading images " << std::endl; return perspective_transformation; }
     
@@ -115,23 +117,45 @@ Mat Image_Match(Mat img_object, Mat img_scene){
     }
     
     Mat H = findHomography( obj, scene, CV_RANSAC );
+	//Mat H = estimateRigidTransform(obj, scene, false);
+	Mat H = MyfindAffine(obj, scene, CV_RANSAC);
     
-    //-- Get the corners from the image_1 ( the object to be "detected" )
-    std::vector<Point2f> obj_corners(4);
-    obj_corners[0] = cvPoint(0,0); obj_corners[1] = cvPoint( img_object.cols, 0 );
-    obj_corners[2] = cvPoint( img_object.cols, img_object.rows ); obj_corners[3] = cvPoint( 0, img_object.rows );
-    std::vector<Point2f> scene_corners(4);
-    
-    perspectiveTransform( obj_corners, scene_corners, H);
-    
-    //-- Draw lines between the corners (the mapped object in the scene - image_2 )
-    line( img_matches, scene_corners[0] + Point2f( img_object.cols, 0), scene_corners[1] + Point2f( img_object.cols, 0), Scalar(0, 255, 0), 4 );
-    line( img_matches, scene_corners[1] + Point2f( img_object.cols, 0), scene_corners[2] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
-    line( img_matches, scene_corners[2] + Point2f( img_object.cols, 0), scene_corners[3] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
-    line( img_matches, scene_corners[3] + Point2f( img_object.cols, 0), scene_corners[0] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
-    
+    ////-- Get the corners from the image_1 ( the object to be "detected" )
+    //std::vector<Point2f> obj_corners(4);
+    //obj_corners[0] = cvPoint(0,0); obj_corners[1] = cvPoint( img_object.cols, 0 );
+    //obj_corners[2] = cvPoint( img_object.cols, img_object.rows ); obj_corners[3] = cvPoint( 0, img_object.rows );
+    //std::vector<Point2f> scene_corners(4);
+    //
+    //perspectiveTransform( obj_corners, scene_corners, H);
+	
+
+
+    ////-- Draw lines between the corners (the mapped object in the scene - image_2 )
+    //line( img_matches, scene_corners[0] + Point2f( img_object.cols, 0), scene_corners[1] + Point2f( img_object.cols, 0), Scalar(0, 255, 0), 4 );
+    //line( img_matches, scene_corners[1] + Point2f( img_object.cols, 0), scene_corners[2] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
+    //line( img_matches, scene_corners[2] + Point2f( img_object.cols, 0), scene_corners[3] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
+    //line( img_matches, scene_corners[3] + Point2f( img_object.cols, 0), scene_corners[0] + Point2f( img_object.cols, 0), Scalar( 0, 255, 0), 4 );
+    //
     //-- Show detected matches
     imshow( "Good Matches & Object detection", img_matches );
-    */
+	waitKey();
+
+	//-- Show the transformed image
+	Mat transformed;
+	cout << H << endl;
+	warpAffine(img_object, transformed, H, Size(img_object.rows, img_object.cols));
+	imshow("transformed image", transformed);
+	waitKey();
+
     return perspective_transformation;
+}
+
+//! Find 6 DOF affine transformation from point match between obj and scene
+// Use CV_RANSAC or 0 (use all keypoints) to specify the type of algorithm to use
+Mat MyfindAffine(vector<Point2f> obj, vector<Point2f> dst, int type,int maxtrail=10000) {
+	if (type == 0) {
+		Mat H = getAffineTransform(obj, dst);
+		return;
+	}
+
 }

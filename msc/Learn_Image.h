@@ -20,4 +20,5 @@ double Verify_Object(Mat, Mat, double);
 Mat Learn_New_Transformation(Mat, Mat, vector<int>);
 int UpdateLayers(int);
 Mat Image_Match(Mat, Mat);
+
 #endif
