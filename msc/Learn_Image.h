@@ -20,5 +20,6 @@ double Verify_Object(Mat, Mat, double);
 Mat Learn_New_Transformation(Mat, Mat, vector<int>);
 int UpdateLayers(int);
 Mat Image_Match(Mat, Mat);
-
+Mat MyfindAffine(vector<Point2f> obj, vector<Point2f> scene, int type, int maxtrail = 10000);
+void mynormalize(vector<Point2f> src, vector<Point3f> &dst, Mat &T);
 #endif
