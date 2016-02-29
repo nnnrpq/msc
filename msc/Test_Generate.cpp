@@ -8,7 +8,7 @@ using namespace std;
 using namespace cv;
 
 #define PI 3.14159265
-int acc = 100;		/*number of random number within the range*/
+int acc = 5;		/*number of random number within the range*/
 double maxscale = 1;	/*maximum scaling factor*/
 double minscale = 0.1;	/*minimum scaling factor*/
 

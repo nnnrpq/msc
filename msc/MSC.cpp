@@ -28,10 +28,10 @@ vector < Mat > transformation_set;
 
 bool xTranslate_layer = true;
 bool yTranslate_layer = true;
-bool rotate_layer = false;
+bool rotate_layer = true;
 bool scale_layer = true;
 
-bool READFROMFILE = 0;
+bool READFROMFILE =0;
 
 /* If not read the transformation from file, test all the possible parameters*/
 int xTranslate_step = 5;
@@ -40,7 +40,7 @@ int rotate_step = 5;
 int scale_step = 5;
 
 double maxscale_para = 1;	/*maximum scaling factor*/
-double minscale_para = 0.5;	/*minimum scaling factor*/
+double minscale_para = 0.1;	/*minimum scaling factor*/
 
 double k_xTranslate = 0.5;
 double k_yTranslate = 0.5;
@@ -56,7 +56,7 @@ double *k_transformations;
 Mat C = (Mat_<double>(1,3) << 0, 0, 1);
 
 
-int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat *Bwd_Path){
+int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat *Bwd_Path, TransformationSet & finalTrans){
     
     Mat G_layer; // Competition function values for each layer.
     vector< Mat > G; // The competition function
@@ -222,11 +222,35 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
         printf("About to call MSC\n");
         ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, transformation_set, &G, k_transformations);
         
+		bool flag = 1;		/* 1 for continue the msc*/
         if(iteration_count %10 == 0){
+			int* idxTrans = new int[layer_count - 1];
 			for (int kk = 0; kk < G.size(); kk++) {
 				cout << "-------\n"<<G[kk] << "-------\n";
+				if (countNonZero(G[kk]) != 1) {
+					flag = 0;
+					break;
+				}
+				else {
+					vector<Point> idx;
+					Mat current;
+					G[kk].convertTo(current, CV_8UC1);
+					findNonZero(current, idx);
+					idxTrans[kk] = (idx[0]).x;
+				}
 			}
             cvWaitKey(0);
+
+			/* stop iteration condition: only one transformation is left*/
+			/* record the final transformation*/
+			if (flag) {
+				double xT = -(img_size.width / 2) + img_size.width / xTranslate_step*idxTrans[0];
+				double yT = -(img_size.height / 2) + img_size.height / yTranslate_step*idxTrans[2];
+				double ang = -180 + 360 / rotate_step*idxTrans[2];
+				double sc = minscale_para + (maxscale_para - minscale_para) / scale_step*idxTrans[3];
+				finalTrans = TransformationSet(xT, yT, ang, sc);
+				break;
+			}
         }
         //printf("MSC dot products are done\n");
         verified_ret = Verify_Object(Input_Image, *Bwd_Path, dot_product_input_object);
@@ -333,6 +357,7 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat Perspective_Transformation_Matrix, 
         matrix_determinant = (sqrt(determinant(Perspective_Transformation_Matrix_2D)));
 	//cout<<"Perspective Matrix Forward: "<<Perspective_Transformation_Matrix_2D<<endl;
         //cout<<"Matrix D Forward   "<<matrix_determinant<<endl;
+		//if (0) {
         if(angle !=0 || matrix_determinant != 1.0){
             //cout<<"Perspective Matrix Forward: "<<Perspective_Transformation_Matrix_2D<<endl;
             Point2f src_center(In.cols/2.0F, In.rows/2.0F);
@@ -342,6 +367,7 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat Perspective_Transformation_Matrix, 
         }else{
             warpPerspective( In, dst, Perspective_Transformation_Matrix_2D, dst.size() );
         }
+
         /*
         if(g.at<double>(0,i) < 0.3){
             g.at<double>(0,i) = 0;
@@ -387,6 +413,8 @@ Mat BackwardTransform(Mat In, Mat Perspective_Transformation_Matrix, Mat g){
         matrix_determinant = (1/(sqrt(determinant(Perspective_Transformation_Matrix_2D))));
         //cout<<"Perspective matrix backward :"<<Perspective_Transformation_Matrix_2D<<endl;
         //cout<<"Matrix D Backward   "<<matrix_determinant<<endl;
+
+		//if (0) {
         if(angle !=0 || matrix_determinant != 1.0){
             //cout<<"Perspective matrix backward :"<<Perspective_Transformation_Matrix_2D<<endl;
             Point2f src_center(In.cols/2.0F, In.rows/2.0F);

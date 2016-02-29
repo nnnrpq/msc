@@ -23,4 +23,7 @@ Mat Image_Match(Mat, Mat);
 Mat MyfindAffine(vector<Point2f> obj, vector<Point2f> scene, int type, int maxtrail);
 void mynormalize(vector<Point2f> src, vector<Point2f> &dst, Mat &T);
 Mat mysolveAffine(vector<Point2f> src, vector<Point2f> dst);
+
+
+
 #endif

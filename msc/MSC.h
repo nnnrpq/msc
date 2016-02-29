@@ -12,8 +12,23 @@ public:
     Mat Fwd_Superposition;
     Mat Transformed_Templates;
 };
+class TransformationSet {
+public:
+	int nonIdenticalCount;		/* show what is in the transformation*/
+	double xTranslate;
+	double yTranslate;
+	double theta;
+	double scale;
+	TransformationSet(double xT = 0, double yT = 0, double ang = 0, double sc = 0) {
+		xTranslate = xT;
+		yTranslate = yT;
+		theta = ang;
+		scale = sc;
+		nonIdenticalCount = (xT != 0) + (yT != 0) + (ang != 0) + (sc != 0);
+	}
+};
 
-int SL_MSC(Mat , Mat , Size , Mat *, Mat *);
+int SL_MSC(Mat , Mat , Size , Mat *, Mat *,TransformationSet &);
 int MapSeekingCircuit(Mat , Mat , Size , Mat *, Mat *, int, vector< Mat > , vector< Mat > *, double []);
 int Verify_Image(Mat , Mat );
 Fwd_Path_Values ForwardTransform(Mat , Mat ,Mat  );
