@@ -22,33 +22,14 @@ Mat dst;
 struct filename_struct {
 	char filename[200];
 };
-//int main() {
-//		double Thresh_VAL = 100;
-//		double MAX_VAL = 1;
-//
-//	Mat test = imread("template_smile.jpg");
-//
-//	/*step 1, generate random image*/
-//	double theta, xtran, ytran, scale;
-//	imshow("template", test);
-//	Mat result = Rand_Transform(test, theta, xtran, ytran, scale);
-//	imshow("random image", result);
-//	waitKey();
-//
-//	/*step 2, Key point and first match*/
-//	Mat Projective_Transformation = Image_Match(result, test);
-//
-//
-//
-//
-//	return 0;
-//}
+
+
 
 int main() {
 	int buf = 0;
 	Mat Memory_Images;
 	Mat Memory_Images_background;
-	Size img_size;
+	vector<int> row_size;
 	vector<Mat> cropped_memory_images;
 	vector<Mat> cropped_memory_images_background;
 	Mat Fwd_Image;
@@ -58,7 +39,7 @@ int main() {
 	uint64_t min_pixel_count = 240000;
 	uint64_t max_pixel_count = 0;
 	char c[] = "Caltech-101/";
-	char* input_image = ".\\101_ObjectCategories\\car_side\\image_0004.jpg";
+	char* input_image = ".\\101_ObjectCategories\\car_side\\image_0005.jpg";
 	int maxRows = 0;
 	int maxCols = 0;
 
@@ -76,7 +57,14 @@ int main() {
 		return -1;
 	}
 
-
+		Mat test = imread("template_smile.jpg");
+	
+		/*step 1, generate random image*/
+		double theta, xtran, ytran, scale;
+		imshow("template", test);
+		Mat result = Rand_Transform(test, theta, xtran, ytran, scale);
+		imshow("random image", result);
+		waitKey();
 
 	/// Create a matrix of the same type and size as src (for dst)
 
@@ -90,7 +78,7 @@ int main() {
 	// threshold function on the edge detected image.
 	threshold(Edge_Detected_Image_GrayScale, Edge_Detected_Image_unpadded, Thresh_VAL, MAX_VAL, THRESH_BINARY);
 	printf("Edge detect image done Size is (%d, %d)\n", Edge_Detected_Image_unpadded.rows, Edge_Detected_Image_unpadded.cols);
-	
+
 
 
 	buf = 0;
@@ -114,7 +102,7 @@ int main() {
 		return EXIT_FAILURE;
 	}
 	buf = buf - 3;
-	
+
 	/// MSC implementation
 	if (buf == 0) {
 		//// If the value of buf is zero this means that
@@ -203,13 +191,12 @@ int main() {
 			Mat paddedImage = padImageMatrix(cropped_memory_images[i], maxRows + 1, maxCols + 1);
 			Memory_Images.push_back(paddedImage.reshape(0, 1));
 
-			/*img_size.push_back(paddedImage.size());*/
+			row_size.push_back(paddedImage.rows);
 
 			printf("The values of padded image %d, %d \n", paddedImage.rows, paddedImage.cols);
 		}
-		img_size = Size(maxCols + 1, maxRows + 1);
 		// The actual MSC will go over here.
-		int ret = SL_MSC(Edge_Detected_Image, Memory_Images, img_size, &Fwd_Image, &Bwd_Image);
+		int ret = SL_MSC(Edge_Detected_Image, Memory_Images, row_size, &Fwd_Image, &Bwd_Image);
 		printf("The return value of SL_MSC is %d\n", ret);
 
 		// Get the returned address Images.

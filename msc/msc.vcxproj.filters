@@ -44,9 +44,6 @@
     <ClCompile Include="Learn_Image.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="main1.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="MSC.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -54,6 +51,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Test_Generate.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="main1.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

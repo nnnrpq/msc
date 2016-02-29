@@ -3,11 +3,12 @@
 #include "opencv2/highgui/highgui.hpp"
 #include <time.h>       /* time */
 
+
 using namespace std;
 using namespace cv;
 
 #define PI 3.14159265
-int acc = 1000;		/*accuracy of the image transformation, e.g. step size between random variable*/
+int acc = 100;		/*number of random number within the range*/
 double maxscale = 1;	/*maximum scaling factor*/
 double minscale = 0.1;	/*minimum scaling factor*/
 

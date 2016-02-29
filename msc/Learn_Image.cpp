@@ -118,7 +118,7 @@ Mat Image_Match(Mat img_object, Mat img_scene){
     
     Mat H = findHomography( obj, scene, CV_RANSAC );
 	//Mat H = estimateRigidTransform(obj, scene, false);
-	Mat H = MyfindAffine(obj, scene, CV_RANSAC);
+	//Mat H = MyfindAffine(obj, scene, CV_RANSAC,10000);
     
     ////-- Get the corners from the image_1 ( the object to be "detected" )
     //std::vector<Point2f> obj_corners(4);
@@ -143,7 +143,9 @@ Mat Image_Match(Mat img_object, Mat img_scene){
 	//-- Show the transformed image
 	Mat transformed;
 	cout << H << endl;
-	warpAffine(img_object, transformed, H, Size(img_object.rows, img_object.cols));
+	//warpAffine(img_object, transformed, H, Size(img_object.rows, img_object.cols));
+	warpPerspective(img_object, transformed, H, Size(img_object.rows, img_object.cols));
+
 	imshow("transformed image", transformed);
 	waitKey();
 
@@ -152,10 +154,10 @@ Mat Image_Match(Mat img_object, Mat img_scene){
 
 //! Find 6 DOF affine transformation from point match between obj and scene
 // Use CV_RANSAC or 0 (use all keypoints) to specify the type of algorithm to use
-Mat MyfindAffine(vector<Point2f> obj, vector<Point2f> scene, int type,int maxtrail=10000) {
+Mat MyfindAffine(vector<Point2f> obj, vector<Point2f> scene, int type,int maxtrail) {
 	if (type == 0) {
 		Mat H = getAffineTransform(obj, scene);
-		return;
+		return H;
 	}
 	else if (type != CV_RANSAC) {
 		printf("no such find affine method:input 0 or CV_RANSAC\n");
@@ -166,15 +168,96 @@ Mat MyfindAffine(vector<Point2f> obj, vector<Point2f> scene, int type,int maxtra
 
 		/*normalise and augment the coodinate first*/
 		Mat Tobj, Tscene;
-		vector<Point3f> newobj, newscene;
-		mynormalize(obj, newobj, Tobj);
-		mynormalize(scene, newscene, Tobj);
-	}
+		vector<Point2f> newobj, newscene;
+		//mynormalize(obj, newobj, Tobj);
+		//mynormalize(scene, newscene, Tscene);
+		newobj = obj; newscene = scene;	/*might not want to normalise*/
 
+		int ptcount = newobj.size();
+		int trailcount = 0;
+		int bestcount = 0;
+		int inliers_count = 0;
+		Mat bestH(2, 3, CV_32F);
+		vector<int> best_ind;
+		double p = 0.999;	/*we want to ensure the posilibity of 'no outliner in a time' is p */
+		int N = 1;		/*this is the estimated number of trails before stop*/
+		double th = 1;	/*threshold for inliers and outliers*/
+		double s = 3;		/*number of points to get matrix H*/
+		unsigned int seed = time(NULL);
+		RNG rng(seed);
+		double p_no_outlier;
+
+		while (trailcount < N) {
+			trailcount++;
+			inliers_count = 0;
+			/*randomly sample s out of the matching pairs*/
+			int* ind = new int[s];
+			Mat rec(1, ptcount, CV_8UC1);
+			rec.setTo(Scalar(0));
+			for (int k = 0; k < s; k++) {
+				ind[k] = rand() % ptcount;
+				if (rec.at<uchar>(0, ind[k]) == 0)
+					rec.at<uchar>(0, ind[k]) = 1;
+				else
+					k--;
+			}
+
+			//for (int k = 0; k < s; k++) {
+			//	cout << ind[k] << endl;
+			//}
+
+			/*get affine matrix from the selected pair*/
+			vector<Point2f> currentobj = { newobj[ind[0]], newobj[ind[1]], newobj[ind[2]] };
+			vector<Point2f> currentscene = { newscene[ind[0]], newscene[ind[1]], newscene[ind[2]] };
+			Mat currentH = getAffineTransform(currentobj, currentscene);
+			//cout << currentH << endl;
+
+			/*test the proposed affine matrix*/
+			vector<Point2f> transformed_obj, transformed_scene;
+			transform(newobj, transformed_obj, currentH);
+			invertAffineTransform(currentH, currentH);
+			transform(newscene, transformed_scene, currentH);
+			vector<int> inliers_ind;
+			for (int k = 0; k < ptcount; k++) {
+				int nn = transformed_obj.size();
+				if (norm(transformed_obj[k] - newscene[k]) < th&&norm(transformed_scene[k] - newobj[k]) < th) {
+					inliers_count++;
+					inliers_ind.push_back(k);
+				}
+			}
+			if (inliers_count > bestcount) {
+				bestcount = inliers_count;
+				bestH = currentH;
+				best_ind = inliers_ind;
+
+				/*probability of no outliers in s samples*/
+				p_no_outlier = 1 - pow(double(bestcount) / ptcount, s);
+				N = log(1 - p) / log(p_no_outlier-1e-8); /*update N*/
+			}
+			if (trailcount > maxtrail) {
+				printf("reach max trial number\n");
+				waitKey();
+				break;
+			}
+		}
+
+		/*find affine based on the best inliers*/
+		vector<Point2f> bestobj, bestscene;
+		for (int k = 0; k < bestcount; k++) {
+			bestobj.push_back(newobj[best_ind[k]]);
+			bestscene.push_back(newscene[best_ind[k]]);
+		}
+		Mat finalH = mysolveAffine(bestobj, bestscene);
+		//cout << Tscene << endl;
+		//invert(Tscene, Tscene);
+		//cout << Tscene << endl;
+		//finalH = Tscene*finalH*Tobj;
+		return finalH;
+	}
 }
 
 //! Augment the point vector with 1's, and normalize the coordinate
-void mynormalize(vector<Point2f> src, vector<Point3f> &dst, Mat &T) {
+void mynormalize(vector<Point2f> src, vector<Point2f> &dst, Mat &T) {
 	Scalar center = mean(src);
 	double meandist=0;
 	double scale;
@@ -185,9 +268,34 @@ void mynormalize(vector<Point2f> src, vector<Point3f> &dst, Mat &T) {
 	scale = sqrt(2) / meandist;
 	
 	for (int i = 0; i < src.size(); i++) {
-		dst.push_back(Point3f(scale*(src[i].x - center[0]), scale*(src[i].y - center[1]), 1));
+		dst.push_back(Point2f(scale*(src[i].x - center[0]), scale*(src[i].y - center[1])));
 	}
 
 	T = (Mat_<float>(3, 3) << scale, 0, -scale*center[0], 0, scale, -scale*center[1], 0, 0, 1);
 	return;
+}
+
+//! solve affine transform matrix with more than 3 pairs of point with svd
+//	T*src = dst (TA=B)
+//	src'*T' = dst'
+//	T:2x3
+Mat mysolveAffine(vector<Point2f> src, vector<Point2f> dst) {
+	Mat T(2, 3, CV_32F);
+
+	int N = src.size();
+	if (src.size()!= dst.size()) {
+		printf("src and dst different length!\n");
+		waitKey();
+		return Mat();
+	}
+	Mat A = Mat(src).reshape(1).t();
+	Mat row = Mat::ones(1, N, CV_32F);
+	A.push_back(row);
+	cout << A << endl;
+	Mat B = Mat(dst).reshape(1).t();
+	cout << B << endl;
+	solve(A.t(), B.t(), T, DECOMP_NORMAL);
+	cout << T;
+	T = T.t();
+	return T;
 }

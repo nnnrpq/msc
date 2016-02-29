@@ -12,6 +12,7 @@
 #include"Learn_Image.h"
 #include "Image_PreProcessing.h"
 
+
 #define PI 3.14159265
 
 using namespace std;
@@ -30,6 +31,17 @@ bool yTranslate_layer = true;
 bool rotate_layer = false;
 bool scale_layer = true;
 
+bool READFROMFILE = 0;
+
+/* If not read the transformation from file, test all the possible parameters*/
+int xTranslate_step = 5;
+int yTranslate_step = 5;
+int rotate_step = 5;
+int scale_step = 5;
+
+double maxscale_para = 1;	/*maximum scaling factor*/
+double minscale_para = 0.5;	/*minimum scaling factor*/
+
 double k_xTranslate = 0.5;
 double k_yTranslate = 0.5;
 double k_rotate = 0.45;
@@ -44,7 +56,7 @@ double *k_transformations;
 Mat C = (Mat_<double>(1,3) << 0, 0, 1);
 
 
-int SL_MSC(Mat Input_Image, Mat Memory_Images, vector<int> row_size, Mat *Fwd_Path, Mat *Bwd_Path){
+int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat *Bwd_Path){
     
     Mat G_layer; // Competition function values for each layer.
     vector< Mat > G; // The competition function
@@ -82,70 +94,138 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, vector<int> row_size, Mat *Fwd_Pa
     k_transformations = new double[layer_count];
     
     k_transformations[layer_count-1] = k_memory;
-    for(int i=1; i<layer_count; i++){
-        char Layer_filename[200];
-        char layer_name[40];
-        printf("iteration #: %d\n", i);
-        strcpy(Layer_filename, "Layer_");
-        
-        if(xTranslate_layer==true){
-            strcpy(layer_name,"xTranslate_layer");
-            xTranslate_layer=false;
-            k_transformations[i-1] = k_xTranslate;
-        }else if(yTranslate_layer==true){
-            strcpy(layer_name,"yTranslate_layer");
-            yTranslate_layer=false;
-            k_transformations[i-1] = k_yTranslate;
-        }else if(rotate_layer==true){
-            strcpy(layer_name,"rotate_layer");
-            rotate_layer=false;
-            k_transformations[i-1] = k_rotate;
-        }else if(scale_layer==true){
-            strcpy(layer_name,"scale_layer");
-            k_transformations[i-1] = k_scale;
-        }
-        
-        strcat(Layer_filename, layer_name);
-        strcat(Layer_filename, ".txt");
-        fp = fopen(Layer_filename, "r+");
-        float next = 0;
-        int count = 0;
-        while( fscanf(fp, "%f ", &next) > 0 ) // parse %f followed by ' '
-        {
-            affine_transformation.push_back(next);
-            count++;
-            if(count == 9){
-                transformations.push_back(affine_transformation.reshape(0,1));
-                G_layer.push_back(1);
-                affine_transformation.release();
-                count = 0;
-            }
-        }
-        
-        fclose(fp);
-        transformation_set.push_back(transformations);
-        if(i<layer_count){
-            G.push_back(G_layer.reshape(0,1));
-        }
-        //cout<<"Transformations"<<endl;
-        //cout<<transformations<<endl;
-        G_layer.release();
-        transformations.release();
-    }
-    
-    for(int i = 0; i < Memory_Images.rows; i++){
-        G_layer.push_back(1);
-    }
-    G.push_back(G_layer.reshape(0,1));
-    G_layer.release();
-    
+
+	if (READFROMFILE) {
+		for (int i = 1; i < layer_count; i++) {
+			char Layer_filename[200];
+			char layer_name[40];
+			printf("iteration #: %d\n", i);
+			strcpy(Layer_filename, "Layer_");
+
+			if (xTranslate_layer == true) {
+				strcpy(layer_name, "xTranslate_layer");
+				xTranslate_layer = false;
+				k_transformations[i - 1] = k_xTranslate;
+			}
+			else if (yTranslate_layer == true) {
+				strcpy(layer_name, "yTranslate_layer");
+				yTranslate_layer = false;
+				k_transformations[i - 1] = k_yTranslate;
+			}
+			else if (rotate_layer == true) {
+				strcpy(layer_name, "Rotate_layer");
+				rotate_layer = false;
+				k_transformations[i - 1] = k_rotate;
+			}
+			else if (scale_layer == true) {
+				strcpy(layer_name, "scale_layer");
+				k_transformations[i - 1] = k_scale;
+			}
+
+			strcat(Layer_filename, layer_name);
+			strcat(Layer_filename, ".txt");
+			fp = fopen(Layer_filename, "r+");
+			float next = 0;
+			int count = 0;
+			while (fscanf(fp, "%f ", &next) > 0) // parse %f followed by ' '
+			{
+				affine_transformation.push_back(next);
+				count++;
+				if (count == 9) {
+					transformations.push_back(affine_transformation.reshape(0, 1));
+					G_layer.push_back(1);
+					affine_transformation.release();
+					count = 0;
+				}
+			}
+
+			fclose(fp);
+			transformation_set.push_back(transformations);
+			if (i < layer_count) {
+				G.push_back(G_layer.reshape(0, 1));
+			}
+			//cout<<"Transformations"<<endl;
+			//cout<<transformations<<endl;
+			G_layer.release();
+			transformations.release();
+		}
+	}
+	else {
+		int lcount = 0;
+		if (xTranslate_layer == true) {
+			double xTranslate = -(img_size.width/2);
+			for (int i = 0; i < xTranslate_step; i++) {
+				affine_transformation = (Mat_<float>(1,9) << 1, 0, xTranslate, 0, 1, 0, 0, 0, 1);
+				transformations.push_back(affine_transformation);
+				xTranslate += img_size.width / xTranslate_step;
+			}
+			transformation_set.push_back(transformations);
+			cout << transformations << endl;
+			transformations.release();
+			G.push_back(Mat::ones(Size(xTranslate_step,1), CV_32FC1));
+			lcount++;
+			k_transformations[lcount - 1] = k_xTranslate;
+		}
+		if (yTranslate_layer == true) {
+			double yTranslate = -(img_size.height / 2);
+			for (int i = 0; i < xTranslate_step; i++) {
+				affine_transformation = (Mat_<float>(1, 9) << 1, 0, 0, 0, 1, yTranslate, 0, 0, 1);
+				transformations.push_back(affine_transformation);
+				yTranslate += img_size.height / yTranslate_step;
+			}
+			transformation_set.push_back(transformations);
+			cout << transformations << endl;
+			transformations.release();
+			G.push_back(Mat::ones(Size(yTranslate_step,1), CV_32FC1));
+			lcount++;
+			k_transformations[lcount - 1] = k_yTranslate;
+		}
+		if (rotate_layer == true) {
+			double theta = -180;
+			for (int i = 0; i < rotate_step; i++) {
+				affine_transformation = (Mat_<float>(1, 9) << cos(theta), -sin(theta), 0, sin(theta), cos(theta), 0, 0, 0, 1);
+				transformations.push_back(affine_transformation);
+				theta += 360 / rotate_step;
+			}
+			transformation_set.push_back(transformations);
+			cout << transformations << endl;
+			transformations.release();
+			G.push_back(Mat::ones(Size(rotate_step, 1), CV_32FC1));
+			lcount++;
+			k_transformations[lcount - 1] = k_rotate;
+		}
+		if (scale_layer == true) {
+			double scale = minscale_para;
+			for (int i = 0; i < scale_step; i++) {
+				affine_transformation = (Mat_<float>(1, 9) << scale, 0, 0, 0, scale, 0, 0, 0, 1);
+				transformations.push_back(affine_transformation);
+				scale += (maxscale_para - minscale_para) / scale_step;
+			}
+			transformation_set.push_back(transformations);
+			cout << transformations << endl;
+			transformations.release();
+			G.push_back(Mat::ones(Size(scale_step, 1), CV_32FC1));
+			lcount++;
+			k_transformations[lcount - 1] = k_scale;
+		}
+	}
+
+	for (int i = 0; i < Memory_Images.rows; i++) {
+		G_layer.push_back(1);
+	}
+	G.push_back(G_layer.reshape(0, 1));
+	G_layer.release();
+
     
     while(iteration_count > 0){
         iteration_count--;
         printf("About to call MSC\n");
-        ret = MapSeekingCircuit(Input_Image, Memory_Images, row_size, Fwd_Path, Bwd_Path, layer_count, transformation_set, &G, k_transformations);
+        ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, transformation_set, &G, k_transformations);
         
         if(iteration_count %10 == 0){
+			for (int kk = 0; kk < G.size(); kk++) {
+				cout << "-------\n"<<G[kk] << "-------\n";
+			}
             cvWaitKey(0);
         }
         //printf("MSC dot products are done\n");
@@ -163,7 +243,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, vector<int> row_size, Mat *Fwd_Pa
     
 }
 
-int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, vector<int> row_size, Mat *Fwd_Path, Mat *Bwd_Path, int layers, vector< Mat > image_transformations, vector< Mat > *G, double k_transformations[]){
+int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat *Bwd_Path, int layers, vector< Mat > image_transformations, vector< Mat > *G, double k_transformations[]){
     
     vector< Mat > g = *G;
     
@@ -184,7 +264,7 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, vector<int> row_size, 
     FPV[0].Fwd_Superposition = Input_Image.clone();
     
     printf("Backward path superposition \n");
-    BPV[layers-1] = Superimpose_Memory_Images(Memory_Images, g[layers-1], row_size[0]).clone();
+    BPV[layers-1] = Superimpose_Memory_Images(Memory_Images, g[layers-1], img_size.height).clone();
     
     
     
@@ -202,7 +282,7 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, vector<int> row_size, 
         //printf("Update competition function\n");
         for(int i = 1; i < layers; i++){
             // Update competition
-            g[i-1] = UpdateCompetition(FPV[i].Transformed_Templates, BPV[i], g[i-1], row_size[0], k_transformations[i-1]).clone();
+            g[i-1] = UpdateCompetition(FPV[i].Transformed_Templates, BPV[i], g[i-1], img_size.height, k_transformations[i-1]).clone();
             
             //cout<<g[i-1]<<endl;
             //cout<<endl;
@@ -210,7 +290,7 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, vector<int> row_size, 
         
     }
     //cout<<"layers-1  "<<layers-1<<endl;
-    g[layers-1] = UpdateCompetition_Memory(Memory_Images, FPV[layers-1].Fwd_Superposition, g[layers-1], row_size[0], k_transformations[layers-1]).clone();
+    g[layers-1] = UpdateCompetition_Memory(Memory_Images, FPV[layers-1].Fwd_Superposition, g[layers-1], img_size.height, k_transformations[layers-1]).clone();
     
     //cout<<"g memory: "<<g[layers-1]<<endl;
     
