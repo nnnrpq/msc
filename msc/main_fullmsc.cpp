@@ -19,7 +19,7 @@ using namespace cv;
 Mat src, src_gray;
 Mat dst;
 double mul = 0.9;		/* the rate of updating the test image*/
-double th = 0.05;		/* threshold for whether a transformation from msc is qualified*/
+double th = 0.15;		/* threshold for whether a transformation from msc is qualified*/
 
 
 struct filename_struct {
@@ -133,7 +133,7 @@ int main() {
 		img_size = Size(maxCols + 1, maxRows + 1);
 
 		// The actual MSC will go over here.
-		TransformationSet finalTrans;
+ 		TransformationSet finalTrans;
 		int ret = SL_MSC(Edge_Detected_Image, Memory_Images, img_size, &Fwd_Image, &Bwd_Image, finalTrans);
 		printf("The return value of SL_MSC is %d\n", ret);
 

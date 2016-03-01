@@ -36,7 +36,7 @@ bool READFROMFILE =0;
 /* If not read the transformation from file, test all the possible parameters*/
 int xTranslate_step = 5;
 int yTranslate_step = 5;
-int rotate_step = 5;
+int rotate_step = 10;
 int scale_step = 5;
 
 double maxscale_para = 1;	/*maximum scaling factor*/
@@ -152,9 +152,37 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 	}
 	else {
 		int lcount = 0;
+		if (rotate_layer == true) {
+			double theta = -90;
+			for (int i = 0; i <= rotate_step; i++) {
+				affine_transformation = (Mat_<float>(1, 9) << cos(theta), -sin(theta), 0, sin(theta), cos(theta), 0, 0, 0, 1);
+				transformations.push_back(affine_transformation);
+				theta += 180 / rotate_step;
+			}
+			transformation_set.push_back(transformations);
+			cout << transformations << endl;
+			transformations.release();
+			G.push_back(Mat::ones(Size(rotate_step, 1), CV_32FC1));
+			lcount++;
+			k_transformations[lcount - 1] = k_rotate;
+		}
+		if (scale_layer == true) {
+			double scale = minscale_para;
+			for (int i = 0; i <= scale_step; i++) {
+				affine_transformation = (Mat_<float>(1, 9) << scale, 0, 0, 0, scale, 0, 0, 0, 1);
+				transformations.push_back(affine_transformation);
+				scale += (maxscale_para - minscale_para) / scale_step;
+			}
+			transformation_set.push_back(transformations);
+			cout << transformations << endl;
+			transformations.release();
+			G.push_back(Mat::ones(Size(scale_step, 1), CV_32FC1));
+			lcount++;
+			k_transformations[lcount - 1] = k_scale;
+		}
 		if (xTranslate_layer == true) {
 			double xTranslate = -(img_size.width/2);
-			for (int i = 0; i < xTranslate_step; i++) {
+			for (int i = 0; i <= xTranslate_step; i++) {
 				affine_transformation = (Mat_<float>(1,9) << 1, 0, xTranslate, 0, 1, 0, 0, 0, 1);
 				transformations.push_back(affine_transformation);
 				xTranslate += img_size.width / xTranslate_step;
@@ -168,7 +196,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 		}
 		if (yTranslate_layer == true) {
 			double yTranslate = -(img_size.height / 2);
-			for (int i = 0; i < xTranslate_step; i++) {
+			for (int i = 0; i <= xTranslate_step; i++) {
 				affine_transformation = (Mat_<float>(1, 9) << 1, 0, 0, 0, 1, yTranslate, 0, 0, 1);
 				transformations.push_back(affine_transformation);
 				yTranslate += img_size.height / yTranslate_step;
@@ -180,36 +208,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 			lcount++;
 			k_transformations[lcount - 1] = k_yTranslate;
 		}
-		if (rotate_layer == true) {
-			double theta = -180;
-			for (int i = 0; i < rotate_step; i++) {
-				affine_transformation = (Mat_<float>(1, 9) << cos(theta), -sin(theta), 0, sin(theta), cos(theta), 0, 0, 0, 1);
-				transformations.push_back(affine_transformation);
-				theta += 360 / rotate_step;
-			}
-			transformation_set.push_back(transformations);
-			cout << transformations << endl;
-			transformations.release();
-			G.push_back(Mat::ones(Size(rotate_step, 1), CV_32FC1));
-			lcount++;
-			k_transformations[lcount - 1] = k_rotate;
-		}
-		if (scale_layer == true) {
-			double scale = minscale_para;
-			for (int i = 0; i < scale_step; i++) {
-				affine_transformation = (Mat_<float>(1, 9) << scale, 0, 0, 0, scale, 0, 0, 0, 1);
-				transformations.push_back(affine_transformation);
-				scale += (maxscale_para - minscale_para) / scale_step;
-			}
-			transformation_set.push_back(transformations);
-			cout << transformations << endl;
-			transformations.release();
-			G.push_back(Mat::ones(Size(scale_step, 1), CV_32FC1));
-			lcount++;
-			k_transformations[lcount - 1] = k_scale;
-		}
 	}
-
 	for (int i = 0; i < Memory_Images.rows; i++) {
 		G_layer.push_back(1);
 	}
@@ -234,19 +233,20 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 				else {
 					vector<Point> idx;
 					Mat current;
+					G[kk] = G[kk] * 100;
 					G[kk].convertTo(current, CV_8UC1);
+					//cout << current << endl << G[kk] << endl;
 					findNonZero(current, idx);
 					idxTrans[kk] = (idx[0]).x;
 				}
 			}
-            cvWaitKey(0);
-
+			cvWaitKey(0);
 			/* stop iteration condition: only one transformation is left*/
 			/* record the final transformation*/
 			if (flag) {
 				double xT = -(img_size.width / 2) + img_size.width / xTranslate_step*idxTrans[0];
-				double yT = -(img_size.height / 2) + img_size.height / yTranslate_step*idxTrans[2];
-				double ang = -180 + 360 / rotate_step*idxTrans[2];
+				double yT = -(img_size.height / 2) + img_size.height / yTranslate_step*idxTrans[1];
+				double ang = -90 + 90 / rotate_step*idxTrans[2];
 				double sc = minscale_para + (maxscale_para - minscale_para) / scale_step*idxTrans[3];
 				finalTrans = TransformationSet(xT, yT, ang, sc);
 				break;
@@ -340,30 +340,34 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat Perspective_Transformation_Matrix, 
     double matrix_determinant;
     Mat rotation_matrix;
     int count = g.cols;
-    g.convertTo(g,CV_64F);
+    g.convertTo(g,CV_32F);
     Mat dst;
     dst = Mat::zeros(In.rows, In.cols, CV_32FC1);
     SuperPosition = Mat::zeros(In.rows, In.cols, CV_32FC1);
-    SuperPosition = g.at<double>(0,0)*In.clone();
-    FPV_return.Transformed_Templates.push_back(SuperPosition.reshape(0,1));
-    for(int i=1; i<count; i++){
+    //SuperPosition = g.at<double>(0,0)*In.clone();
+    //FPV_return.Transformed_Templates.push_back(SuperPosition.reshape(0,1));
+    for(int i=0; i<count; i++){
         Mat Perspective_Transformation_Matrix_2D = Perspective_Transformation_Matrix.row(i).reshape(0,3);
         
-        sine = Perspective_Transformation_Matrix_2D.at<float>(0,1);
+        sine = -Perspective_Transformation_Matrix_2D.at<float>(0,1);
         cosine = Perspective_Transformation_Matrix_2D.at<float>(0,0);
         
-        angle = roundf(atan(sine/cosine) * 180/PI);
+        angle = roundf(atan(sine/cosine)*180/PI);
         
         matrix_determinant = (sqrt(determinant(Perspective_Transformation_Matrix_2D)));
 	//cout<<"Perspective Matrix Forward: "<<Perspective_Transformation_Matrix_2D<<endl;
         //cout<<"Matrix D Forward   "<<matrix_determinant<<endl;
 		//if (0) {
-        if(angle !=0 || matrix_determinant != 1.0){
+        if(angle !=0 || abs(matrix_determinant - 1) >= 0.0001){
             //cout<<"Perspective Matrix Forward: "<<Perspective_Transformation_Matrix_2D<<endl;
             Point2f src_center(In.cols/2.0F, In.rows/2.0F);
             rotation_matrix = getRotationMatrix2D(src_center, angle, matrix_determinant);
             vconcat(rotation_matrix, C, rotation_matrix);
+			//cout<<rotation_matrix<<endl; 
             warpPerspective( In, dst, rotation_matrix, dst.size() );
+			//imshow("In", In);
+			//imshow("dst", dst);
+			//cvWaitKey();
         }else{
             warpPerspective( In, dst, Perspective_Transformation_Matrix_2D, dst.size() );
         }
@@ -373,7 +377,8 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat Perspective_Transformation_Matrix, 
             g.at<double>(0,i) = 0;
         }
          */
-        Mat dst_scaled = g.at<double>(0,i)*dst;
+		dst.convertTo(dst, CV_32FC1);
+        Mat dst_scaled = g.at<float>(0,i)*dst;
         SuperPosition = SuperPosition + dst_scaled;
         FPV_return.Transformed_Templates.push_back(dst_scaled.reshape(0,1));
         dst.release();
@@ -396,26 +401,26 @@ Mat BackwardTransform(Mat In, Mat Perspective_Transformation_Matrix, Mat g){
     double matrix_determinant;
     Mat rotation_matrix;
     int count = g.cols;
-    g.convertTo(g,CV_64F);
+    g.convertTo(g,CV_32F);
     Mat dst;
     dst = Mat::zeros(In.rows, In.cols, CV_32FC1);
     SuperPosition = Mat::zeros(In.rows, In.cols, CV_32FC1);
-    SuperPosition = g.at<double>(0,0)*In.clone();
+    //SuperPosition = g.at<double>(0,0)*In.clone();
     
-    for(int i=1; i<count; i++){
+    for(int i=0; i<count; i++){
         Mat Perspective_Transformation_Matrix_2D = Perspective_Transformation_Matrix.row(i).reshape(0,3);
         
-        sine = Perspective_Transformation_Matrix_2D.at<float>(0,1);
+        sine = -Perspective_Transformation_Matrix_2D.at<float>(0,1);
         cosine = Perspective_Transformation_Matrix_2D.at<float>(0,0);
         
-        angle = (-1)*roundf(atan(sine/cosine) * 180/PI);
+        angle = (-1)*roundf(atan(sine/cosine) *180/PI);
         
         matrix_determinant = (1/(sqrt(determinant(Perspective_Transformation_Matrix_2D))));
         //cout<<"Perspective matrix backward :"<<Perspective_Transformation_Matrix_2D<<endl;
         //cout<<"Matrix D Backward   "<<matrix_determinant<<endl;
 
 		//if (0) {
-        if(angle !=0 || matrix_determinant != 1.0){
+        if(angle !=0 || abs(matrix_determinant-1) >= 0.0001){
             //cout<<"Perspective matrix backward :"<<Perspective_Transformation_Matrix_2D<<endl;
             Point2f src_center(In.cols/2.0F, In.rows/2.0F);
             rotation_matrix = getRotationMatrix2D(src_center, angle, matrix_determinant);
@@ -426,8 +431,8 @@ Mat BackwardTransform(Mat In, Mat Perspective_Transformation_Matrix, Mat g){
             Perspective_Transformation_Matrix_2D.at<float>(1,2) = (-1)*Perspective_Transformation_Matrix_2D.at<float>(1,2);
             warpPerspective( In, dst, Perspective_Transformation_Matrix_2D, dst.size() );
         }
-        
-        Mat dst_scaled = g.at<double>(0,i)*dst;
+		dst.convertTo(dst, CV_32FC1);
+        Mat dst_scaled = g.at<float>(0,i)*dst;
         SuperPosition = SuperPosition + dst_scaled;
         dst.release();
     }

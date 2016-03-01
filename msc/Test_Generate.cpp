@@ -18,8 +18,9 @@ Mat Combine_Transform(Mat t1, Mat t2) {
 	Mat temp(3, 3, CV_64F);
 	t1.push_back(newrow);
 	t2.push_back(newrow);
+	cout << t2 << endl << t1 << endl;
 	temp = t2*t1;
-	//cout << temp<<endl;
+	cout << temp<<endl;
 	Mat result(2,3,CV_64F);
 	temp(Rect(0, 0, 3, 2)).copyTo(result(Rect(0, 0, 3, 2)));
 	//cout << result << endl;
@@ -29,18 +30,22 @@ Mat Combine_Transform(Mat t1, Mat t2) {
 Mat Rand_Transform(Mat src, double & theta, double & xtranslate, double & ytranslate, double & scale) {
 	srand(time(NULL));
 	int x = rand();
-	theta = double(rand() % acc)/acc*2*180-180;		/*the possible theta is -180:360/acc:180*/
+	theta = double(rand() % acc)/acc*2*90-90;		/*the possible theta is -90:180/acc:90*/
 	xtranslate = double(rand() % acc)/acc * src.cols - round(0.5*src.cols);		/*xtranslate -0.5cols:cols/acc:0.5cols */
 	ytranslate = double(rand() % acc)/acc * src.rows - round(0.5*src.rows);		/*ytranslate -0.5rows:rows/acc:0.5rows */
 	scale = double(rand() % acc)/acc*(maxscale-minscale)+minscale;
 
+	printf("xtran=%f,ytran=%f,theta=%f,scale=%f\n", xtranslate, ytranslate, theta, scale);
+
 	Mat Rot = getRotationMatrix2D(Point2f(round(src.cols / 2), round(src.rows / 2)), theta, scale);
 	Mat Translate = (Mat_<double>(2, 3) << 1, 0, xtranslate, 0, 1, ytranslate);
-	//cout << Translate;
-	Mat T = Combine_Transform(Translate,Rot);
-
+	//cout << Translate << endl << Rot << endl;
+	//Mat T = Combine_Transform(Rot,Translate);
+	//cout << T << endl;
 	Mat result;
-	warpAffine(src, result, T, Size(src.cols, src.rows));
+	cout << Rot << endl;
+	warpAffine(src, result, Rot, Size(src.cols, src.rows));
+	warpAffine(result, result, Translate, Size(src.cols, src.rows));
 
 	return result;
 }
