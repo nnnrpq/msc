@@ -34,12 +34,12 @@ Mat orientationMap(const cv::Mat& mag, const cv::Mat& ori, double thresh = 1.0)
     return oriMap;
 }
 
-Mat CannyThreshold(Mat src_gray, Mat src, Mat dst)
+Mat CannyThreshold(Mat src_gray, int lowThreshold , int highThreshold )
 {
     double sigmaX = 1.5;
     double sigmaY = 1.5;
-    int lowThreshold = 100;
-    int highThreshold = 150;
+    //int lowThreshold = 100;
+    //int highThreshold = 150;
     int kernel_size = 3;
     Mat detected_edges, detected_edges_canny;
     Mat gray, float_gray, blur_img, num, den;

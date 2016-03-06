@@ -44,12 +44,11 @@ int main() {
 	//char c[] = "Caltech-101/";
 	//char* input_image = ".\\101_ObjectCategories\\car_side\\image_0005.jpg";
 
-
 	DIR *dir;
 	struct dirent *ent;
 	vector< filename_struct > filename_vector;
 
-	Mat test = imread("template.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	Mat test = imread("templateH1.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 
 	/*step 1, generate random image*/
 	double theta, xtran, ytran, scale;
@@ -67,7 +66,7 @@ int main() {
 		src_gray = src.clone();
 		dst.create(src_gray.size(), src_gray.type());
 		/// Perform cannyThreshold operation (This function is present as separate C++ file)
-		Mat Edge_Detected_Image_GrayScale = CannyThreshold(src_gray, src, dst).clone();
+		Mat Edge_Detected_Image_GrayScale = CannyThreshold(src_gray).clone();
 		Mat Edge_Detected_Image_unpadded(src_gray.rows, src_gray.cols, CV_32FC1);
 
 		// The image pixel values should be in range between 0 and 1. Therefore, performing the
@@ -132,9 +131,18 @@ int main() {
 		}
 		img_size = Size(maxCols + 1, maxRows + 1);
 
-		// The actual MSC will go over here.
+		//// The actual MSC will go over here.
  		TransformationSet finalTrans;
 		int ret = SL_MSC(Edge_Detected_Image, Memory_Images, img_size, &Fwd_Image, &Bwd_Image, finalTrans);
+		
+		//Mat paddedImage = padImageMatrix(cropped_memory_images[0], maxRows + 1, maxCols + 1);
+		//// The actual MSC will go over here.
+		//TransformationSet finalTrans;
+		//int ret = SL_MSC(paddedImage, Edge_Detected_Image.reshape(0,1), img_size, &Fwd_Image, &Bwd_Image, finalTrans);
+
+
+
+		
 		printf("The return value of SL_MSC is %d\n", ret);
 
 		// Get the returned address Images.

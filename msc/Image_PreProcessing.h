@@ -7,7 +7,7 @@
 #include <vector>
 using namespace cv;
 using namespace std;
-Mat CannyThreshold(Mat, Mat, Mat);
+Mat CannyThreshold(Mat src_gray, int lowThreshold = 50, int highThreshold = 80);
 Mat CannyThreshold_MemoryImages(Mat);
 Mat resize_image(Mat , uint64_t, double * );
 Mat padImageMatrix(Mat ,int ,int );

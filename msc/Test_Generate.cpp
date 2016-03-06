@@ -31,10 +31,12 @@ Mat Rand_Transform(Mat src, double & theta, double & xtranslate, double & ytrans
 	srand(time(NULL));
 	int x = rand();
 	theta = double(rand() % acc)/acc*2*90-90;		/*the possible theta is -90:180/acc:90*/
-	xtranslate = double(rand() % acc)/acc * src.cols - round(0.5*src.cols);		/*xtranslate -0.5cols:cols/acc:0.5cols */
-	ytranslate = double(rand() % acc)/acc * src.rows - round(0.5*src.rows);		/*ytranslate -0.5rows:rows/acc:0.5rows */
+	xtranslate = double(rand() % acc)/acc * src.cols*0.8 - round(0.4*src.cols);		/*xtranslate -0.5cols:cols/acc:0.5cols */
+	ytranslate = double(rand() % acc)/acc * src.rows*0.8 - round(0.4*src.rows);		/*ytranslate -0.5rows:rows/acc:0.5rows */
 	scale = double(rand() % acc)/acc*(maxscale-minscale)+minscale;
-
+	//scale = 1;
+	//theta = 0;
+	//ytranslate = 0;
 	printf("xtran=%f,ytran=%f,theta=%f,scale=%f\n", xtranslate, ytranslate, theta, scale);
 
 	Mat Rot = getRotationMatrix2D(Point2f(round(src.cols / 2), round(src.rows / 2)), theta, scale);
