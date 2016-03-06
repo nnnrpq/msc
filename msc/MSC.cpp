@@ -46,7 +46,7 @@ vector<double> sc_val;
 
 
 double maxscale_para = 1;	/*maximum scaling factor*/
-double minscale_para = 0.1;	/*minimum scaling factor*/
+double minscale_para = 0.4;	/*minimum scaling factor*/
 
 double k_xTranslate = 0.5;
 double k_yTranslate = 0.5;
@@ -277,6 +277,9 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 					idxTrans[kk] = (idx[0]).x;
 				}
 			}
+			imshow("FPV_Forward[1]", (*Fwd_Path) * 255);
+
+			imshow("BPV[1]", (*Bwd_Path) * 255);
 			cvWaitKey(0);
 			/* stop iteration condition: only one transformation is left*/
 			/* record the final transformation*/
@@ -315,6 +318,8 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
     Fwd_Path_Values *FPV = new Fwd_Path_Values[layers];
     
     Mat *BPV = new Mat[layers];
+
+	Mat *TranSc = new Mat_<double>[layers];
     
     /*
      The transformation matrix in openCV looks like:
@@ -338,7 +343,7 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
         printf("Apply transformations\n");
         for(int i = 1; i < layers; i++){
             // Perform all of the forward path transformations
-            FPV[i] = ForwardTransform(FPV[i-1].Fwd_Superposition, image_transformations[i-1].clone(), g[i-1]);
+            FPV[i] = ForwardTransform(FPV[i-1].Fwd_Superposition, image_transformations[i-1].clone(), g[i-1],TranSc[i-1]);
             
             // Perform all of the backward path transformations
             BPV[layers-1-i] = BackwardTransform(BPV[layers-i], image_transformations[layers-i-1].clone(), g[layers-1-i]);
@@ -347,7 +352,7 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
         //printf("Update competition function\n");
         for(int i = 1; i < layers; i++){
             // Update competition
-            g[i-1] = UpdateCompetition(FPV[i].Transformed_Templates, BPV[i], g[i-1], img_size.height, k_transformations[i-1]).clone();
+            g[i-1] = UpdateCompetition(FPV[i].Transformed_Templates, BPV[i], g[i-1], img_size.height, k_transformations[i-1], TranSc[i - 1]).clone();
             
             //cout<<g[i-1]<<endl;
             //cout<<endl;
@@ -358,10 +363,10 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
     g[layers-1] = UpdateCompetition_Memory(Memory_Images, FPV[layers-1].Fwd_Superposition, g[layers-1], img_size.height, k_transformations[layers-1]).clone();
     
     //cout<<"g memory: "<<g[layers-1]<<endl;
-    
-    imshow("FPV_Forward[1]", (FPV[layers-1].Fwd_Superposition)*255);
-    
-    imshow("BPV[1]", (BPV[0])*255);
+    //
+    //imshow("FPV_Forward[1]", (FPV[layers-1].Fwd_Superposition)*255);
+    //
+    //imshow("BPV[1]", (BPV[0])*255);
 	//waitKey();
     
     *Fwd_Path = FPV[layers-1].Fwd_Superposition;
@@ -371,7 +376,7 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
     return 0;
 }
 
-Fwd_Path_Values ForwardTransform(Mat In, Mat Perspective_Transformation_Matrix, Mat g){
+Fwd_Path_Values ForwardTransform(Mat In, Mat Perspective_Transformation_Matrix, Mat g, Mat &Transc){
     Fwd_Path_Values FPV_return;
     Mat SuperPosition;
     Mat TransformedTemplates;
@@ -385,12 +390,13 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat Perspective_Transformation_Matrix, 
     g.convertTo(g,CV_32F);
     Mat dst;
 	Mat temp;
+
     dst = In.clone();
     SuperPosition = Mat::zeros(In.rows, In.cols, CV_32FC1);
     SuperPosition = g.at<float>(0,0)*In.clone();
 	SuperPosition.convertTo(SuperPosition, CV_32F);
     FPV_return.Transformed_Templates.push_back(SuperPosition.reshape(0,1));
-	//cout << Perspective_Transformation_Matrix << endl;
+	Transc.push_back(1.0);
 
 	if (test_forw) {
 		imshow("In0", g.at<float>(0, 0)*In * 255);
@@ -402,6 +408,7 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat Perspective_Transformation_Matrix, 
 		if (g.at<float>(0, i) == 0) {
 			Mat temp1 = Mat::zeros(Size((In.rows)*(In.cols),1), CV_32F);
 			FPV_return.Transformed_Templates.push_back(temp1);
+			Transc.push_back(1.0);
 			continue;
 		}
         Mat Perspective_Transformation_Matrix_2D = Perspective_Transformation_Matrix.row(i).reshape(0,3);
@@ -411,7 +418,9 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat Perspective_Transformation_Matrix, 
         
         angle = roundf(atan(sine/cosine)*180/PI);
         
-        matrix_determinant = (1/sqrt(determinant(Perspective_Transformation_Matrix_2D)));
+        matrix_determinant = (sqrt(determinant(Perspective_Transformation_Matrix_2D)));
+		Transc.push_back(matrix_determinant);
+		matrix_determinant = 1 / matrix_determinant;
 	//cout<<"Perspective Matrix Forward: "<<Perspective_Transformation_Matrix_2D<<endl;
         //cout<<"Matrix D Forward   "<<matrix_determinant<<endl;
 		//if (0) {
@@ -547,7 +556,7 @@ Mat Superimpose_Memory_Images(Mat M, Mat g, int r)
     return Superimposed_Image.reshape(0,r);
 }
 
-Mat UpdateCompetition(Mat Transformed_Templates, Mat BackwardTransform, Mat g, int r, double k){
+Mat UpdateCompetition(Mat Transformed_Templates, Mat BackwardTransform, Mat g, int r, double k, Mat TranSc){
     int count = Transformed_Templates.rows;
     g.convertTo(g,CV_64F);
     Mat subtracted_g(g.rows, g.cols, CV_64FC1);
@@ -575,8 +584,13 @@ Mat UpdateCompetition(Mat Transformed_Templates, Mat BackwardTransform, Mat g, i
 			imshow("BackwardTransform", BackwardTransform);
 			waitKey();
 		}
+
         if(BackwardTransform_L2 !=0 && T_L2 != 0){
-            q.at<double>(0,i) = T.dot(BackwardTransform)/(T_L2*BackwardTransform_L2);
+			double a = TranSc.at<double>(i, 0)-1;
+			//if (abs(a) > 0.0001)
+			//	cout << TranSc << endl;
+            q.at<double>(0,i) = T.dot(BackwardTransform)*((TranSc.at<double>(i,0)));
+			//q.at<double>(0, i) = T.dot(BackwardTransform) / T_L2;
         }else{
             q.at<double>(0,i) = 0;
         }

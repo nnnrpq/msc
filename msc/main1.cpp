@@ -58,7 +58,7 @@ int main() {
 	uint64_t min_pixel_count = 240000;
 	uint64_t max_pixel_count = 0;
 	char c[] = "Caltech-101/";
-	char* input_image = ".\\101_ObjectCategories\\car_side\\image_0004.jpg";
+	char* input_image = ".\\101_ObjectCategories\\car_side\\image_0007.jpg";
 	int maxRows = 0;
 	int maxCols = 0;
 
@@ -209,7 +209,8 @@ int main() {
 		}
 		img_size = Size(maxCols + 1, maxRows + 1);
 		// The actual MSC will go over here.
-		int ret = SL_MSC(Edge_Detected_Image, Memory_Images, img_size, &Fwd_Image, &Bwd_Image);
+		TransformationSet finalTrans;
+		int ret = SL_MSC(Edge_Detected_Image, Memory_Images, img_size, &Fwd_Image, &Bwd_Image, finalTrans);
 		printf("The return value of SL_MSC is %d\n", ret);
 
 		// Get the returned address Images.

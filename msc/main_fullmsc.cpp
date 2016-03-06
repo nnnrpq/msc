@@ -48,7 +48,7 @@ int main() {
 	struct dirent *ent;
 	vector< filename_struct > filename_vector;
 
-	Mat test = imread("templateH1.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	Mat test = imread("template_smile.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 
 	/*step 1, generate random image*/
 	double theta, xtran, ytran, scale;
@@ -58,7 +58,7 @@ int main() {
 	waitKey();
 
 	bool flag = 1;	/* flag for whether to continue the transformation*/
-
+	buf = 1;
 	do {
 
 		/// Create a matrix of the same type and size as src (for dst)
@@ -77,7 +77,7 @@ int main() {
 		/// MSC implementation
 			// This indicates that there are images already present in the memory.
 
-		buf = 1;
+
 		// Step 1 :- Parse through all of the memory images and get the 
 		// non pixel count. At the same time store the ROI images in the 
 		// Mat file. No need to pad images in this step.  
@@ -85,7 +85,6 @@ int main() {
 
 		Mat mem_img_gray = test;					/* use the template image as memory image*/
 		Mat mem_img_canny = CannyThreshold_MemoryImages(mem_img_gray);
-
 
 		// Since the image pixel values should be between 0 and 1, as a result,
 		// reflecting the values of g, thus, performing the edge detection function.
@@ -171,6 +170,7 @@ int main() {
 			printf("MSC is wrong\n");
 			flag = 1;
 		}
+		buf = 0;
 	} while (flag);
 	printf("MSC is done\n");
 

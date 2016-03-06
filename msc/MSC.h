@@ -31,10 +31,10 @@ public:
 int SL_MSC(Mat , Mat , Size , Mat *, Mat *,TransformationSet &);
 int MapSeekingCircuit(Mat , Mat , Size , Mat *, Mat *, int, vector< Mat > , vector< Mat > *, double []);
 int Verify_Image(Mat , Mat );
-Fwd_Path_Values ForwardTransform(Mat , Mat ,Mat  );
+Fwd_Path_Values ForwardTransform(Mat , Mat ,Mat,Mat &  );
 Mat BackwardTransform(Mat , Mat , Mat );
 Mat Superimpose_Memory_Images(Mat , Mat, int );
-Mat UpdateCompetition(Mat, Mat, Mat ,int , double);
+Mat UpdateCompetition(Mat, Mat, Mat ,int , double,Mat);
 Mat UpdateCompetition_Memory(Mat, Mat, Mat ,int , double);
 
 Mat UpdateCompetition_Background(Mat, Mat, Mat, Mat, Mat ,int );

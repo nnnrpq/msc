@@ -10,7 +10,7 @@ using namespace cv;
 #define PI 3.14159265
 int acc = 5;		/*number of random number within the range*/
 double maxscale = 1;	/*maximum scaling factor*/
-double minscale = 0.1;	/*minimum scaling factor*/
+double minscale = 0.4;	/*minimum scaling factor*/
 
 Mat Combine_Transform(Mat t1, Mat t2) {
 	/*apply t1 and then t2, the combined transformation matrix is returned*/
