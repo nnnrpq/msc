@@ -27,13 +27,14 @@ Mat Combine_Transform(Mat t1, Mat t2) {
 	return result;
 }
 
-Mat Rand_Transform(Mat src, double & theta, double & xtranslate, double & ytranslate, double & scale) {
+Mat Rand_Transform(Mat src, double & theta, double & xtranslate, double & ytranslate, double & scale, int flag = 1) {
 	srand(time(NULL));
-	int x = rand();
-	theta = double(rand() % acc)/acc*2*90-90;		/*the possible theta is -90:180/acc:90*/
-	xtranslate = double(rand() % acc)/acc * src.cols*0.8 - round(0.4*src.cols);		/*xtranslate -0.5cols:cols/acc:0.5cols */
-	ytranslate = double(rand() % acc)/acc * src.rows*0.8 - round(0.4*src.rows);		/*ytranslate -0.5rows:rows/acc:0.5rows */
-	scale = double(rand() % acc)/acc*(maxscale-minscale)+minscale;
+	if (flag) {
+		theta = double(rand() % acc) / acc * 2 * 90 - 90;		/*the possible theta is -90:180/acc:90*/
+		xtranslate = double(rand() % acc) / acc * src.cols*0.8 - round(0.4*src.cols);		/*xtranslate -0.5cols:cols/acc:0.5cols */
+		ytranslate = double(rand() % acc) / acc * src.rows*0.8 - round(0.4*src.rows);		/*ytranslate -0.5rows:rows/acc:0.5rows */
+		scale = double(rand() % acc) / acc*(maxscale - minscale) + minscale;
+	}
 	//scale = 1;
 	//theta = 0;
 	//ytranslate = 0;
@@ -45,7 +46,7 @@ Mat Rand_Transform(Mat src, double & theta, double & xtranslate, double & ytrans
 	//Mat T = Combine_Transform(Rot,Translate);
 	//cout << T << endl;
 	Mat result;
-	cout << Rot << endl;
+	//cout << Rot << endl;
 	warpAffine(src, result, Rot, Size(src.cols, src.rows));
 	warpAffine(result, result, Translate, Size(src.cols, src.rows));
 

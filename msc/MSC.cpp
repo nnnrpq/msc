@@ -25,7 +25,7 @@ double MAX_VAL = 255;
 Mat transformations;
 vector < Mat > transformation_set;
 
-
+/* layer control*/
 bool xTranslate_layer = true;
 bool yTranslate_layer = true;
 bool rotate_layer = true;
@@ -34,8 +34,8 @@ bool scale_layer = 1;
 bool READFROMFILE =0;
 
 /* If not read the transformation from file, test all the possible parameters*/
-double xTranslate_step = 15;
-double yTranslate_step = 15;
+double xTranslate_step = 10;
+double yTranslate_step = 10;
 double rotate_step = 10;
 double scale_step = 5;
 
@@ -43,26 +43,29 @@ vector<double> xT_val;
 vector<double> yT_val;
 vector<double> rot_val;
 vector<double> sc_val;
-
-
 double maxscale_para = 1;	/*maximum scaling factor*/
 double minscale_para = 0.4;	/*minimum scaling factor*/
 
+/* k-step value*/
 double k_xTranslate = 0.5;
 double k_yTranslate = 0.5;
 double k_rotate = 0.45;
 double k_scale = 0.35;
-
 double k_memory = 0.25;
 
+/* debug and display control*/
 int test_forw = 0;
 int test_back = 0;
 int test_comp =0;
+int dispInMid = 0;
 
-
+/* others*/
 double *k_transformations;
-
 Mat C = (Mat_<double>(1,3) << 0, 0, 1);
+
+/* scaling control*/
+/* start scaling normalizer after all the rest layer are clear*/
+int startscale = 0;
 
 
 int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat *Bwd_Path, TransformationSet & finalTrans){
@@ -177,7 +180,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 				xTranslate2 -= img_size.width / xTranslate_step;
 			}
 			transformation_set.push_back(transformations);
-			cout << transformations << endl;
+			//cout << transformations << endl;
 			transformations.release();
 			G.push_back(Mat::ones(Size(xT_val.size(), 1), CV_32FC1));
 			lcount++;
@@ -199,7 +202,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 				yTranslate2 -= img_size.height / yTranslate_step;
 			}
 			transformation_set.push_back(transformations);
-			cout << transformations << endl;
+			//cout << transformations << endl;
 			transformations.release();
 			G.push_back(Mat::ones(Size(yT_val.size(), 1), CV_32FC1));
 			lcount++;
@@ -223,7 +226,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 				theta1 += 180 / rotate_step;
 				theta2 -= 180 / rotate_step;
 			}
-			cout << transformations << endl;
+			//cout << transformations << endl;
 			transformation_set.push_back(transformations);
 			transformations.release();
 			G.push_back(Mat::ones(Size(rot_val.size(), 1), CV_32FC1));
@@ -239,7 +242,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 				scale -= (maxscale_para - minscale_para) / scale_step;
 			}
 			transformation_set.push_back(transformations);
-			cout << transformations << endl;
+			//cout << transformations << endl;
 			transformations.release();
 			G.push_back(Mat::ones(Size(sc_val.size(), 1), CV_32FC1));
 			lcount++;
@@ -252,15 +255,15 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 	G.push_back(G_layer.reshape(0, 1));
 	G_layer.release();
 
-    
+	int* idxTrans = new int[layer_count - 1];
+
     while(iteration_count > 0){
         iteration_count--;
         printf("About to call MSC\n");
         ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, transformation_set, &G, k_transformations);
         
-		bool flag = 1;		/* 1 for continue the msc*/
-        if(iteration_count %10 == 0){
-			int* idxTrans = new int[layer_count - 1];
+		bool flag = 1;		/* 1 for stopping the msc*/
+        if(iteration_count %5 == 0){
 			for (int kk = 0; kk < G.size(); kk++) {
 				cout << "-------\n"<<G[kk] << "-------\n";
 				if (countNonZero(G[kk]) != 1) {
@@ -270,17 +273,18 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 				else {
 					vector<Point> idx;
 					Mat current;
-					G[kk] = G[kk] * 100;
-					G[kk].convertTo(current, CV_8UC1);
+					G[kk].convertTo(current, CV_8UC1,100);
 					//cout << current << endl << G[kk] << endl;
 					findNonZero(current, idx);
 					idxTrans[kk] = (idx[0]).x;
 				}
 			}
-			imshow("FPV_Forward[1]", (*Fwd_Path) * 255);
+			if (dispInMid) {
+				imshow("FPV_Forward[1]", (*Fwd_Path) * 255);
 
-			imshow("BPV[1]", (*Bwd_Path) * 255);
-			cvWaitKey(0);
+				imshow("BPV[1]", (*Bwd_Path) * 255);
+				cvWaitKey(0);
+			}
 			/* stop iteration condition: only one transformation is left*/
 			/* record the final transformation*/
 			if (flag) {
@@ -380,7 +384,7 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat Perspective_Transformation_Matrix, 
     Fwd_Path_Values FPV_return;
     Mat SuperPosition;
     Mat TransformedTemplates;
-    double Thresh_VAL = 1;
+    double Thresh_VAL = 100;
     float sine;
     float cosine;
     float angle;
@@ -398,11 +402,11 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat Perspective_Transformation_Matrix, 
     FPV_return.Transformed_Templates.push_back(SuperPosition.reshape(0,1));
 	Transc.push_back(1.0);
 
-	if (test_forw) {
-		imshow("In0", g.at<float>(0, 0)*In * 255);
-		imshow("dst0", g.at<float>(0, 0)*dst * 255);
-		cvWaitKey();
-	}
+	//if (test_forw) {
+	//	imshow("In0", g.at<float>(0, 0)*In * 255);
+	//	imshow("dst0", g.at<float>(0, 0)*dst * 255);
+	//	cvWaitKey();
+	//}
 
     for(int i=1; i<count; i++){
 		if (g.at<float>(0, i) == 0) {
@@ -429,13 +433,27 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat Perspective_Transformation_Matrix, 
             Point2f src_center(In.cols/2.0F, In.rows/2.0F);
             rotation_matrix = getRotationMatrix2D(src_center, angle, matrix_determinant);
             vconcat(rotation_matrix, C, rotation_matrix);
-			//cout<<rotation_matrix<<endl; 
             warpPerspective( In, dst, rotation_matrix, dst.size() );
+
+			//dst.convertTo(dst, CV_8U, 255);
+			//imshow("ori dst", dst);
+			//threshold(dst,dst, Thresh_VAL, MAX_VAL, THRESH_BINARY);
+			//imshow("th dst", dst);
+			////Transc.push_back(sum(In)[0]/sum(dst)[0]);
+			//if (abs(matrix_determinant - 1) >= 0.0001)
+			//	erode(dst, dst, Mat::ones(floor(matrix_determinant), floor(matrix_determinant), CV_8U));
+			//else
+			//	erode(dst, dst, Mat::ones(1,1, CV_8U));
+			//dst.convertTo(dst, CV_32F, 1.0 / 255);
+			//imshow("after dst", dst);
+			//waitKey();
+
 			//imshow("In", In);
 			//imshow("dst", dst);
 			//cvWaitKey();
         }else{
             warpPerspective( In, dst, Perspective_Transformation_Matrix_2D, dst.size() );
+			//Transc.push_back(1.0);
         }
 		if (0) {
 			dst.convertTo(temp, CV_8U, 255);
@@ -589,8 +607,11 @@ Mat UpdateCompetition(Mat Transformed_Templates, Mat BackwardTransform, Mat g, i
 			double a = TranSc.at<double>(i, 0)-1;
 			//if (abs(a) > 0.0001)
 			//	cout << TranSc << endl;
-            q.at<double>(0,i) = T.dot(BackwardTransform)*((TranSc.at<double>(i,0)));
+			if (startscale)
+				q.at<double>(0,i) = T.dot(BackwardTransform)*((TranSc.at<double>(i,0)));
 			//q.at<double>(0, i) = T.dot(BackwardTransform) / T_L2;
+			else
+				q.at<double>(0, i) = T.dot(BackwardTransform);
         }else{
             q.at<double>(0,i) = 0;
         }

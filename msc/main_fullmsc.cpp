@@ -18,7 +18,7 @@ using namespace cv;
 
 Mat src, src_gray;
 Mat dst;
-double mul = 0.9;		/* the rate of updating the test image*/
+double mul = 0.8;		/* the rate of updating the test image*/
 double th = 0.15;		/* threshold for whether a transformation from msc is qualified*/
 
 
@@ -48,19 +48,19 @@ int main() {
 	struct dirent *ent;
 	vector< filename_struct > filename_vector;
 
-	Mat test = imread("template_smile.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	Mat test = imread("templatePY.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 
 	/*step 1, generate random image*/
 	double theta, xtran, ytran, scale;
 	imshow("template", test);
-	Mat src = Rand_Transform(test, theta, xtran, ytran, scale);		/*src is the test image*/
-	imshow("random image", src);
-	waitKey();
+	Mat src = Rand_Transform(test, theta, xtran, ytran, scale,1);		/*src is the test image*/
+
 
 	bool flag = 1;	/* flag for whether to continue the transformation*/
 	buf = 1;
 	do {
-
+		imshow("random image", src);
+		waitKey();
 		/// Create a matrix of the same type and size as src (for dst)
 
 		src_gray = src.clone();
@@ -147,7 +147,7 @@ int main() {
 		// Get the returned address Images.
 		imshow("Forward Path", Fwd_Image * 255);
 		imshow("Backward Path", Bwd_Image * 255);
-
+			
 		/// Wait until user exit program by pressing a key
 		waitKey(0);
 
@@ -159,16 +159,17 @@ int main() {
 		printf("the target scale is %f, msc result is %f\n", scale, finalTrans.scale);
 
 		if (abs(xtran - finalTrans.xTranslate) / img_size.width < th && abs(ytran - finalTrans.yTranslate) / img_size.height < th&&
-			abs(scale - finalTrans.scale) < th && abs(theta - finalTrans.theta) / 360 < th) {
+			abs(scale - finalTrans.scale) < th && abs(theta - finalTrans.theta) / 180 < th) {
 			xtran = xtran*mul;
-			ytran = xtran*mul;
-			scale = scale*mul;
+			ytran = ytran*mul;
+			scale = 1-(1-scale)*mul;
 			theta = theta*mul;
-			src = Rand_Transform(test, theta, xtran, ytran, scale);
+			src = Rand_Transform(test, theta, xtran, ytran, scale,0);
 		}
 		else {
 			printf("MSC is wrong\n");
-			flag = 1;
+			flag = 0;
+			waitKey();
 		}
 		buf = 0;
 	} while (flag);

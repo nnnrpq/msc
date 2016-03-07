@@ -7,5 +7,5 @@ using namespace cv;
 using namespace std;
 
 
-Mat Rand_Transform(Mat src, double & theta, double & xtranslate, double & ytranslate, double & scale);
+Mat Rand_Transform(Mat src, double & theta, double & xtranslate, double & ytranslate, double & scale,int flag=1);
 Mat Combine_Transform(Mat t1, Mat t2);
