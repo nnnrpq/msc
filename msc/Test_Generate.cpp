@@ -8,9 +8,9 @@ using namespace std;
 using namespace cv;
 
 #define PI 3.14159265
-int acc = 5;		/*number of random number within the range*/
+int acc = 500;		/*number of random number within the range*/
 double maxscale = 1;	/*maximum scaling factor*/
-double minscale = 0.4;	/*minimum scaling factor*/
+double minscale = 0.6;	/*minimum scaling factor*/
 
 Mat Combine_Transform(Mat t1, Mat t2) {
 	/*apply t1 and then t2, the combined transformation matrix is returned*/
@@ -38,6 +38,7 @@ Mat Rand_Transform(Mat src, double & theta, double & xtranslate, double & ytrans
 	//scale = 1;
 	//theta = 0;
 	//ytranslate = 0;
+	//xtranslate = 0;
 	printf("xtran=%f,ytran=%f,theta=%f,scale=%f\n", xtranslate, ytranslate, theta, scale);
 
 	Mat Rot = getRotationMatrix2D(Point2f(round(src.cols / 2), round(src.rows / 2)), theta, scale);

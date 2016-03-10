@@ -46,12 +46,29 @@ Mat CannyThreshold(Mat src_gray, int lowThreshold , int highThreshold )
     Mat detected_edges_img;
     
     Mat Sobel_Image;
-    
+	src_gray = src_gray > 30;
     GaussianBlur(src_gray, detected_edges, Size(5,5), sigmaX, sigmaY, BORDER_DEFAULT );
     
     Canny( detected_edges, detected_edges_canny, lowThreshold, highThreshold, kernel_size );
+
+	vector<vector<Point> > contours;
+	vector<Vec4i> hierarchy;
+	findContours(detected_edges_canny, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+
+	/// Draw contours
+	Mat drawing = Mat::zeros(detected_edges_canny.size(), CV_8UC3);
+	for (int i = 0; i< contours.size(); i++)
+	{
+		Scalar color = Scalar(255, 255, 255);
+		drawContours(drawing, contours, i, color, 1, 8, hierarchy, 0, Point());
+	}
+
+	/// Show in a window
+	namedWindow("Contours", CV_WINDOW_AUTOSIZE);
+	imshow("Contours", drawing);
+	waitKey(0);
     
-  return detected_edges_canny;
+  return drawing;
  }
 
 
@@ -66,6 +83,7 @@ Mat CannyThreshold_MemoryImages(Mat src_gray)
     Mat gray, float_gray, blur_img, num, den;
     Mat detected_edges_img;
     float angle =0;
+	src_gray = src_gray > 30;
     GaussianBlur(src_gray, detected_edges_canny, Size(5,5), sigmaX, sigmaY, BORDER_DEFAULT );
     Canny( detected_edges_canny, detected_edges_canny, lowThreshold, highThreshold, kernel_size );
     
@@ -73,10 +91,24 @@ Mat CannyThreshold_MemoryImages(Mat src_gray)
     printf("src_gray size %d, %d\n", src_gray.rows, src_gray.cols);
     croppedImage = ROI_image(detected_edges_canny);
     
-    //imshow("demo", croppedImage);
-    //cvWaitKey(0);
-    
-    return croppedImage;
+	vector<vector<Point> > contours;
+	vector<Vec4i> hierarchy;
+	findContours(detected_edges_canny, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+
+	/// Draw contours
+	Mat drawing = Mat::zeros(detected_edges_canny.size(), CV_8UC3);
+	for (int i = 0; i< contours.size(); i++)
+	{
+		Scalar color = Scalar(255, 255, 255);
+		drawContours(drawing, contours, i, color, 1, 8, hierarchy, 0, Point());
+	}
+
+	/// Show in a window
+	namedWindow("Contours", CV_WINDOW_AUTOSIZE);
+	imshow("Contours", drawing);
+	waitKey(0);
+
+	return drawing;
 }
 
 Mat resize_image(Mat src, uint64_t target, double *scale_value)
