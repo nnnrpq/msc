@@ -51,7 +51,7 @@ Mat CannyThreshold(Mat src_gray, int lowThreshold , int highThreshold )
     
     Canny( detected_edges, detected_edges_canny, lowThreshold, highThreshold, kernel_size );
 
-	vector<vector<Point> > contours;
+	/*vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
 	findContours(detected_edges_canny, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
@@ -61,14 +61,14 @@ Mat CannyThreshold(Mat src_gray, int lowThreshold , int highThreshold )
 	{
 		Scalar color = Scalar(255, 255, 255);
 		drawContours(drawing, contours, i, color, 1, 8, hierarchy, 0, Point());
-	}
+	}*/
 
 	/// Show in a window
 	namedWindow("Contours", CV_WINDOW_AUTOSIZE);
-	imshow("Contours", drawing);
+	imshow("Contours", detected_edges_canny);
 	waitKey(0);
     
-  return drawing;
+  return detected_edges_canny;
  }
 
 
@@ -96,10 +96,10 @@ Mat CannyThreshold_MemoryImages(Mat src_gray)
 	findContours(detected_edges_canny, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
 	/// Draw contours
-	Mat drawing = Mat::zeros(detected_edges_canny.size(), CV_8UC3);
+	Mat drawing = Mat::zeros(detected_edges_canny.size(), CV_8UC1);
 	for (int i = 0; i< contours.size(); i++)
 	{
-		Scalar color = Scalar(255, 255, 255);
+		Scalar color = Scalar(255);
 		drawContours(drawing, contours, i, color, 1, 8, hierarchy, 0, Point());
 	}
 

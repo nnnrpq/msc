@@ -48,8 +48,8 @@ int main() {
 	struct dirent *ent;
 	vector< filename_struct > filename_vector;
 
-	Mat test = imread("img_19.png", CV_LOAD_IMAGE_GRAYSCALE);
-
+	Mat test = imread("img_1.png", CV_LOAD_IMAGE_GRAYSCALE);
+	test.channels();
 	/*step 1, generate random image*/
 	double theta, xtran, ytran, scale;
 	imshow("template", test);

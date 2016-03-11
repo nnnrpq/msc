@@ -34,10 +34,10 @@ bool scale_layer = 1;
 bool READFROMFILE =0;
 
 /* If not read the transformation from file, test all the possible parameters*/
-double xTranslate_step = 10;
-double yTranslate_step = 10;
-double rotate_step = 10;
-double scale_step = 5;
+double xTranslate_step = 20;
+double yTranslate_step = 20;
+double rotate_step = 20;
+double scale_step = 10;
 
 vector<double> xT_val;
 vector<double> yT_val;
@@ -171,13 +171,13 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 				affine_transformation = (Mat_<float>(1, 9) << 1, 0, xTranslate1, 0, 1, 0, 0, 0, 1);
 				transformations.push_back(affine_transformation);
 				xT_val.push_back(xTranslate1);
-				xTranslate1 += img_size.width / xTranslate_step;
+				xTranslate1 += 0.8*img_size.width / xTranslate_step;
 				if (i != 0) {
 					affine_transformation = (Mat_<float>(1, 9) << 1, 0, xTranslate2, 0, 1, 0, 0, 0, 1);
 					transformations.push_back(affine_transformation);
 					xT_val.push_back(xTranslate2);
 				}
-				xTranslate2 -= img_size.width / xTranslate_step;
+				xTranslate2 -= 0.8*img_size.width / xTranslate_step;
 			}
 			transformation_set.push_back(transformations);
 			//cout << transformations << endl;
@@ -193,13 +193,13 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 				affine_transformation = (Mat_<float>(1, 9) << 1, 0, 0, 0, 1, yTranslate1, 0, 0, 1);
 				transformations.push_back(affine_transformation);
 				yT_val.push_back(yTranslate1);
-				yTranslate1 += img_size.height / yTranslate_step;
+				yTranslate1 += 0.8*img_size.height / yTranslate_step;
 				if (i != 0) {
 					affine_transformation = (Mat_<float>(1, 9) << 1, 0, 0, 0, 1, yTranslate2, 0, 0, 1);
 					transformations.push_back(affine_transformation);
 					yT_val.push_back(yTranslate2);
 				}
-				yTranslate2 -= img_size.height / yTranslate_step;
+				yTranslate2 -= 0.8*img_size.height / yTranslate_step;
 			}
 			transformation_set.push_back(transformations);
 			//cout << transformations << endl;
@@ -320,7 +320,11 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 				double xT = -xT_val[idxTrans[0]];
 				double yT = -yT_val[idxTrans[1]];
 				double ang = -rot_val[idxTrans[2]];
-				double sc = sc_val[idxTrans[3]];
+				double sc;
+				if (scale_layer)
+					sc = sc_val[idxTrans[3]];
+				else
+					sc = 1;
 				//double xT = 0;
 				//double yT = 0;
 				//double ang = 0;
@@ -590,7 +594,7 @@ Mat Superimpose_Memory_Images(Mat M, Mat g, int r)
     //printf("Cols count is: %d\n", M.cols);
     for(int i=0; i < row_count; i++){
         //printf("columns in M[i] %d\n",M.row(i).cols);
-        Superimposed_Image = (Superimposed_Image + g.at<double>(0,i)*M.row(i));
+        Superimposed_Image = Superimposed_Image + g.at<double>(0, i)*M.row(i);
     }
     Superimposed_Image.convertTo(Superimposed_Image,CV_32FC1);
     //printf("Memory superposition\n");
