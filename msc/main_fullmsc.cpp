@@ -49,7 +49,7 @@ int main() {
 	vector< filename_struct > filename_vector;
 
 	Mat test = imread("img_1.png", CV_LOAD_IMAGE_GRAYSCALE);
-	test.channels();
+	test = padImageMatrix(test, round(test.rows*1.5), round(test.cols*1.5));
 	/*step 1, generate random image*/
 	double theta, xtran, ytran, scale;
 	imshow("template", test);

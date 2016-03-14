@@ -34,9 +34,9 @@ bool scale_layer = 1;
 bool READFROMFILE =0;
 
 /* If not read the transformation from file, test all the possible parameters*/
-double xTranslate_step = 20;
-double yTranslate_step = 20;
-double rotate_step = 20;
+double xTranslate_step = 10;
+double yTranslate_step = 10;
+double rotate_step = 10;
 double scale_step = 10;
 
 vector<double> xT_val;
@@ -44,7 +44,7 @@ vector<double> yT_val;
 vector<double> rot_val;
 vector<double> sc_val;
 double maxscale_para = 1;	/*maximum scaling factor*/
-double minscale_para = 0.6;	/*minimum scaling factor*/
+double minscale_para = 0.4;	/*minimum scaling factor*/
 
 /* k-step value*/
 double k_xTranslate = 0.5;
@@ -57,7 +57,7 @@ double k_memory = 0.25;
 int test_forw = 0;
 int test_back = 0;
 int test_comp =0;
-int dispInMid = 1;
+int dispInMid = 0;
 
 /* others*/
 double *k_transformations;
@@ -241,6 +241,18 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 				sc_val.push_back(scale);
 				scale -= (maxscale_para - minscale_para) / scale_step;
 			}
+	/*		double scale1 = 1;
+			double newscale;
+			double temp = maxscale_para;
+			maxscale_para = 1 / minscale_para;
+			minscale_para = 1 / temp;
+			for (int i = 0; i <= scale_step; i++) {
+				newscale = 1 / scale1;
+				affine_transformation = (Mat_<float>(1, 9) << newscale, 0, 0, 0, newscale, 0, 0, 0, 1);
+				transformations.push_back(affine_transformation);
+				sc_val.push_back(newscale);
+				scale1 += (maxscale_para - minscale_para) / scale_step;
+			}*/
 			transformation_set.push_back(transformations);
 			cout << transformations << endl;
 			transformations.release();
@@ -249,7 +261,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 			k_transformations[lcount - 1] = k_scale;
 
 			/*push back 0 for k_scale first*/
-			//k_transformations[lcount - 1] = 0.0001;
+			//k_transformations[lcount - 1] = 0.1;
 		}
 	}
 
@@ -270,7 +282,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
         
 		bool flag = 1;		/* 1 for stopping the msc*/
         if(iteration_count %5 == 0){
-			/* only inspect before the scaling layer*/
+			///* only inspect before the scaling layer*/
 			//for (int kk = 0; kk < 2; kk++) {
 			//	cout << "-------\n"<<G[kk] << "-------\n";
 			//	if (countNonZero(G[kk]) != 1) {
@@ -291,7 +303,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
  		//		k_transformations[layer_count - 2] = k_scale;
 			//}
 
-			for (int kk = 0; kk < G.size()-1; kk++) {
+			for (int kk = 0; kk < G.size() - 1; kk++) {
 				cout << "-------\n" << G[kk] << "-------\n";
 				if (countNonZero(G[kk]) != 1) {
 					flag = 0;
@@ -343,6 +355,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
         }
          */
     }
+	ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, transformation_set, &G, k_transformations);
     printf("The value of verified_ret is %g\n", verified_ret);
 	xT_val.clear();
 	yT_val.clear();
@@ -395,7 +408,7 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
             // Update competition
             g[i-1] = UpdateCompetition(FPV[i].Transformed_Templates, BPV[i], g[i-1], img_size.height, k_transformations[i-1], TranSc[i - 1]).clone();
             
-            //cout<<g[i-1]<<endl;
+            cout<<"g"<<i-1<<"="<<g[i-1]<<endl;
             //cout<<endl;
         }
         
@@ -405,11 +418,11 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
     
     //cout<<"g memory: "<<g[layers-1]<<endl;
     //
-    //imshow("FPV_Forward[1]", (FPV[layers-1].Fwd_Superposition)*255);
-    //
-    //imshow("BPV[1]", (BPV[0])*255);
+ //   imshow("FPV_Forward[1]", (FPV[layers-1].Fwd_Superposition)*255);
+ //   
+ //   //imshow("BPV[1]", (BPV[0])*255);
 	//waitKey();
-    
+ //   
     *Fwd_Path = FPV[layers-1].Fwd_Superposition;
     *Bwd_Path = BPV[0];
     
@@ -432,7 +445,7 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat Perspective_Transformation_Matrix, 
     Mat dst;
 	Mat temp;
 
-    dst = In.clone();
+    //dst = In.clone();
     SuperPosition = Mat::zeros(In.rows, In.cols, CV_32FC1);
     SuperPosition = g.at<float>(0,0)*In.clone();
 	SuperPosition.convertTo(SuperPosition, CV_32F);
@@ -472,7 +485,7 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat Perspective_Transformation_Matrix, 
             vconcat(rotation_matrix, C, rotation_matrix);
             warpPerspective( In, dst, rotation_matrix, dst.size(), INTER_NEAREST);
 
-			Transc.push_back(double(countNonZero(In)) / double(countNonZero(dst)));
+			Transc.push_back(sqrt(double(countNonZero(In)) / double(countNonZero(dst))));
 
 			//imshow("In", In);
 			//imshow("dst", dst);
@@ -602,7 +615,7 @@ Mat Superimpose_Memory_Images(Mat M, Mat g, int r)
     return Superimposed_Image.reshape(0,r);
 }
 
-Mat UpdateCompetition(Mat Transformed_Templates, Mat BackwardTransform, Mat g, int r, double k, Mat TranSc){
+Mat UpdateCompetition(Mat Transformed_Templates, Mat BackwardTransform, Mat g, int r, double k, Mat TranSc,double p){
     int count = Transformed_Templates.rows;
     g.convertTo(g,CV_64F);
     Mat subtracted_g(g.rows, g.cols, CV_64FC1);
@@ -613,6 +626,7 @@ Mat UpdateCompetition(Mat Transformed_Templates, Mat BackwardTransform, Mat g, i
     double T_L2;
     double BackwardTransform_L2;
     double min, max;
+	cout << TranSc << endl;
     for(int i=0; i<count; i++){
 		if (g.at<double>(0, i) == 0) {
 			q.at<double>(0, i) = 0;
@@ -633,9 +647,6 @@ Mat UpdateCompetition(Mat Transformed_Templates, Mat BackwardTransform, Mat g, i
 
 		//cout << TranSc << endl;
         if(BackwardTransform_L2 !=0 && T_L2 != 0){
-			double a = TranSc.at<double>(i, 0)-1;
-			//if (abs(a) > 0.0001)
-			//	cout << TranSc << endl;
 			if (startscale)
 				q.at<double>(0,i) = T.dot(BackwardTransform)*((TranSc.at<double>(i,0)));
 			//q.at<double>(0, i) = T.dot(BackwardTransform) / T_L2;
@@ -644,11 +655,16 @@ Mat UpdateCompetition(Mat Transformed_Templates, Mat BackwardTransform, Mat g, i
         }else{
             q.at<double>(0,i) = 0;
         }
+		if (TranSc.at<double>(i, 0) < 1)
+			p = 1.5;
     }
-    cout<<"q: "<<q<<endl;
+
+    //cout<<"q: "<<q<<endl;
     minMaxLoc(q, &min, &max);
    // cout<<"q_min:"<<min<<"  q_max: "<<max<<endl;
-    subtract(g, k*(1-q/max), subtracted_g);
+	Mat temp;
+	pow(1- q / max, p, temp);
+    subtract(g, k*(temp), subtracted_g) ;
 	//cout << "g:" << g << "  subtracted_g: " << subtracted_g << endl;
     subtracted_g.convertTo(subtracted_g,CV_32F);
     threshold(subtracted_g, thresholded_g, Thresh_VAL, MAX_VAL, THRESH_TOZERO);
@@ -687,7 +703,7 @@ Mat UpdateCompetition_Memory(Mat Transformed_Templates, Mat BackwardTransform, M
     minMaxLoc(q, &min, &max);
     //cout<<"in update MEMORY q_min:"<<min<<"  q_max: "<<max<<endl;
     subtract(g, k*(1-q/max), subtracted_g);
-    cout<<"q: "<<q<<endl;
+    //cout<<"q: "<<q<<endl;
     subtracted_g.convertTo(subtracted_g,CV_32FC1);
     threshold(subtracted_g, thresholded_g, Thresh_VAL, MAX_VAL, THRESH_TOZERO);
     return thresholded_g;

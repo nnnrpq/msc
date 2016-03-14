@@ -63,10 +63,10 @@ Mat CannyThreshold(Mat src_gray, int lowThreshold , int highThreshold )
 		drawContours(drawing, contours, i, color, 1, 8, hierarchy, 0, Point());
 	}*/
 
-	/// Show in a window
-	namedWindow("Contours", CV_WINDOW_AUTOSIZE);
-	imshow("Contours", detected_edges_canny);
-	waitKey(0);
+	// Show in a window
+	//namedWindow("Contours", CV_WINDOW_AUTOSIZE);
+	//imshow("Contours", detected_edges_canny);
+	//waitKey(0);
     
   return detected_edges_canny;
  }
@@ -104,9 +104,9 @@ Mat CannyThreshold_MemoryImages(Mat src_gray)
 	}
 
 	/// Show in a window
-	namedWindow("Contours", CV_WINDOW_AUTOSIZE);
-	imshow("Contours", drawing);
-	waitKey(0);
+	//namedWindow("Contours", CV_WINDOW_AUTOSIZE);
+	//imshow("Contours", drawing);
+	//waitKey(0);
 
 	return drawing;
 }

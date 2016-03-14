@@ -34,7 +34,7 @@ int Verify_Image(Mat , Mat );
 Fwd_Path_Values ForwardTransform(Mat , Mat ,Mat,Mat &  );
 Mat BackwardTransform(Mat , Mat , Mat );
 Mat Superimpose_Memory_Images(Mat , Mat, int );
-Mat UpdateCompetition(Mat, Mat, Mat ,int , double,Mat);
+Mat UpdateCompetition(Mat, Mat, Mat ,int , double,Mat,double p = 1);
 Mat UpdateCompetition_Memory(Mat, Mat, Mat ,int , double);
 
 Mat UpdateCompetition_Background(Mat, Mat, Mat, Mat, Mat ,int );
