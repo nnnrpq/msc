@@ -34,9 +34,9 @@ bool scale_layer = 1;
 bool READFROMFILE =0;
 
 /* If not read the transformation from file, test all the possible parameters*/
-double xTranslate_step = 10;
-double yTranslate_step = 10;
-double rotate_step = 10;
+double xTranslate_step = 20;
+double yTranslate_step = 20;
+double rotate_step = 20;
 double scale_step = 10;
 
 vector<double> xT_val;
@@ -58,6 +58,8 @@ int test_forw = 0;
 int test_back = 0;
 int test_comp =0;
 int dispInMid = 0;
+int dispsc = 0;
+int dispg = 0;
 
 /* others*/
 double *k_transformations;
@@ -241,18 +243,18 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 				sc_val.push_back(scale);
 				scale -= (maxscale_para - minscale_para) / scale_step;
 			}
-	/*		double scale1 = 1;
-			double newscale;
-			double temp = maxscale_para;
-			maxscale_para = 1 / minscale_para;
-			minscale_para = 1 / temp;
-			for (int i = 0; i <= scale_step; i++) {
-				newscale = 1 / scale1;
-				affine_transformation = (Mat_<float>(1, 9) << newscale, 0, 0, 0, newscale, 0, 0, 0, 1);
-				transformations.push_back(affine_transformation);
-				sc_val.push_back(newscale);
-				scale1 += (maxscale_para - minscale_para) / scale_step;
-			}*/
+			//double scale1 = 1;
+			//double newscale;
+			//double temp = maxscale_para;
+			//maxscale_para = 1 / minscale_para;
+			//minscale_para = 1 / temp;
+			//for (int i = 0; i <= scale_step; i++) {
+			//	newscale = 1 / scale1;
+			//	affine_transformation = (Mat_<float>(1, 9) << newscale, 0, 0, 0, newscale, 0, 0, 0, 1);
+			//	transformations.push_back(affine_transformation);
+			//	sc_val.push_back(newscale);
+			//	scale1 += (maxscale_para - minscale_para) / scale_step;
+			//}
 			transformation_set.push_back(transformations);
 			cout << transformations << endl;
 			transformations.release();
@@ -261,7 +263,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 			k_transformations[lcount - 1] = k_scale;
 
 			/*push back 0 for k_scale first*/
-			//k_transformations[lcount - 1] = 0.1;
+			//k_transformations[lcount - 1] = 0.01;
 		}
 	}
 
@@ -408,7 +410,8 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
             // Update competition
             g[i-1] = UpdateCompetition(FPV[i].Transformed_Templates, BPV[i], g[i-1], img_size.height, k_transformations[i-1], TranSc[i - 1]).clone();
             
-            cout<<"g"<<i-1<<"="<<g[i-1]<<endl;
+			if (dispg)
+				cout<<"g"<<i-1<<"="<<g[i-1]<<endl;
             //cout<<endl;
         }
         
@@ -626,7 +629,9 @@ Mat UpdateCompetition(Mat Transformed_Templates, Mat BackwardTransform, Mat g, i
     double T_L2;
     double BackwardTransform_L2;
     double min, max;
-	cout << TranSc << endl;
+
+	if (dispsc)
+		cout << TranSc << endl;
     for(int i=0; i<count; i++){
 		if (g.at<double>(0, i) == 0) {
 			q.at<double>(0, i) = 0;

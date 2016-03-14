@@ -8,7 +8,7 @@ using namespace std;
 using namespace cv;
 
 #define PI 3.14159265
-int acc = 100;		/*number of random number within the range*/
+int acc = 150;		/*number of random number within the range*/
 double maxscale = 1;	/*maximum scaling factor*/
 double minscale = 0.4;	/*minimum scaling factor*/
 
@@ -35,10 +35,18 @@ Mat Rand_Transform(Mat src, double & theta, double & xtranslate, double & ytrans
 		ytranslate = double(rand() % acc) / acc * src.rows*0.8 - round(0.4*src.rows);		/*ytranslate -0.5rows:rows/acc:0.5rows */
 		scale = double(rand() % acc) / acc*(maxscale - minscale) + minscale;
 	}
-	//scale = 1;
-	//theta = 0;
-	//ytranslate = 0;
-	//xtranslate = 0;
+	//scale = 0.616;
+	//theta = -55;
+	//ytranslate = 113;
+	//xtranslate = -211;
+	//scale = 0.676;
+	//theta = -21;
+	//ytranslate = -69;
+	//xtranslate = -82;
+	//scale = 0.58;
+	//theta = -54;
+	//ytranslate = -34;
+	//xtranslate = 46;
 	printf("xtran=%f,ytran=%f,theta=%f,scale=%f\n", xtranslate, ytranslate, theta, scale);
 
 	Mat Rot = getRotationMatrix2D(Point2f(round(src.cols / 2), round(src.rows / 2)), theta, scale);

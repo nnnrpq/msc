@@ -31,7 +31,7 @@ double Verify_Object(Mat Input_Object, Mat Backward_Path_Object, double dot_prod
     double dot_product_transformations;
     Backward_Path_Object.convertTo(Backward_Path_Object, CV_32FC1);
     Input_Object.convertTo(Input_Object, CV_32FC1);
-    dot_product_transformations = Input_Object.dot(Backward_Path_Object)/ Input_Object.dot(Input_Object);
+    dot_product_transformations = Input_Object.dot(Backward_Path_Object)/ sqrt(Input_Object.dot(Input_Object)* Backward_Path_Object.dot(Backward_Path_Object));
     
 	//imshow("input", Input_Object);
 	//imshow("result", Backward_Path_Object);
