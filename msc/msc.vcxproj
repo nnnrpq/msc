@@ -161,7 +161,7 @@
   <ItemGroup>
     <ClCompile Include="Image_PreProcessing.cpp" />
     <ClCompile Include="Learn_Image.cpp" />
-    <ClCompile Include="main_fullmsc.cpp" />
+    <ClCompile Include="main_framemsc.cpp" />
     <ClCompile Include="MSC.cpp" />
     <ClCompile Include="region_of_interest.cpp" />
     <ClCompile Include="Test_Generate.cpp" />

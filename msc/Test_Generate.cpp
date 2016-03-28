@@ -35,15 +35,15 @@ Mat Rand_Transform(Mat src, double & theta, double & xtranslate, double & ytrans
 		ytranslate = double(rand() % acc) / acc * src.rows*0.8 - round(0.4*src.rows);		/*ytranslate -0.5rows:rows/acc:0.5rows */
 		scale = double(rand() % acc) / acc*(maxscale - minscale) + minscale;
 	}
-	//scale = 0.616;
-	//theta = -55;
-	//ytranslate = 113;
-	//xtranslate = -211;
+	scale = 0.616;
+	theta = -55;
+	ytranslate = 113;
+	xtranslate = -111;
 	//scale = 0.676;
 	//theta = -21;
 	//ytranslate = -69;
 	//xtranslate = -82;
-	//scale = 0.58;
+	//scale = 0.5;
 	//theta = -54;
 	//ytranslate = -34;
 	//xtranslate = 46;
