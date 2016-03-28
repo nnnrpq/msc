@@ -29,16 +29,27 @@ Mat Combine_Transform(Mat t1, Mat t2) {
 
 Mat Rand_Transform(Mat src, double & theta, double & xtranslate, double & ytranslate, double & scale, int flag = 1) {
 	srand(time(NULL));
-	if (flag) {
+	if (flag==1) {
 		theta = double(rand() % acc) / acc * 2 * 90 - 90;		/*the possible theta is -90:180/acc:90*/
 		xtranslate = double(rand() % acc) / acc * src.cols*0.8 - round(0.4*src.cols);		/*xtranslate -0.5cols:cols/acc:0.5cols */
 		ytranslate = double(rand() % acc) / acc * src.rows*0.8 - round(0.4*src.rows);		/*ytranslate -0.5rows:rows/acc:0.5rows */
 		scale = double(rand() % acc) / acc*(maxscale - minscale) + minscale;
+
+		//scale = 0.616;
+		//theta = -55;
+		//ytranslate = 113;
+		//xtranslate = -111;
 	}
-	scale = 0.616;
-	theta = -55;
-	ytranslate = 113;
-	xtranslate = -111;
+	else if (flag == 2) {	/* add small noise*/
+		theta += double(rand() % acc -acc/2) / acc * 2 * 90 *0.05;		
+		xtranslate += double(rand() % acc - acc/2) / acc * src.cols*0.8 *0.05;
+		ytranslate += double(rand() % acc - acc / 2) / acc * src.rows*0.8*0.05;
+		scale += double(rand() % acc - acc / 2) / acc*(maxscale - minscale)*0.05;
+	}
+	//scale = 0.616;
+	//theta = -55;
+	//ytranslate = 113;
+	//xtranslate = -111;
 	//scale = 0.676;
 	//theta = -21;
 	//ytranslate = -69;

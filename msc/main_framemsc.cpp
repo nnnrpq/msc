@@ -19,8 +19,8 @@ using namespace cv;
 Mat src, src_gray;
 Mat dst;
 double mul = 0.8;		/* the rate of updating the test image*/
-double th = 0.15;		/* threshold for whether a transformation from msc is qualified*/
-
+double th = 0.15;		/* threshold for whether a transformation from msc is qualified*/					
+int framectl = 1;		/* frame control*/
 
 struct filename_struct {
 	char filename[200];
@@ -48,14 +48,16 @@ int main() {
 	struct dirent *ent;
 	vector< filename_struct > filename_vector;
 
-	//Mat test = imread("img_1.png", CV_LOAD_IMAGE_GRAYSCALE);
-	Mat test = imread("templatePY.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-	Mat test1;
-	dilate(test, test1, Mat::ones(Size(15, 15), CV_8U));
-	imshow("before", test);
-	//test = test1;
-	imshow("after dilate", test1);
-	waitKey();
+	Mat test = imread("img_1.png", CV_LOAD_IMAGE_GRAYSCALE);
+	//Mat test = imread("templatePY.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+
+	//Mat test1;
+	//dilate(test, test1, Mat::ones(Size(15, 15), CV_8U));
+	//imshow("before", test);
+	////test = test1;
+	//imshow("after dilate", test1);
+	//waitKey();
+
 	test = padImageMatrix(test, round(test.rows*1.5), round(test.cols*1.5));
 	/*step 1, generate random image*/
 	double theta, xtran, ytran, scale;
@@ -65,6 +67,8 @@ int main() {
 
 	bool flag = 1;	/* flag for whether to continue the transformation*/
 	buf = 1;
+	TransformationSet finalTrans;
+	finalTrans.nonIdenticalCount = -1;
 	do {
 		//imshow("random image", src);
 		//waitKey();
@@ -142,7 +146,8 @@ int main() {
 
 
 		//// The actual MSC will go over here.
- 		TransformationSet finalTrans;
+		if (!framectl)
+			finalTrans.nonIdenticalCount = -1;
 		int ret = SL_MSC(Edge_Detected_Image, Memory_Images, img_size, &Fwd_Image, &Bwd_Image, finalTrans);
 		
 		//Mat paddedImage = padImageMatrix(cropped_memory_images[0], maxRows + 1, maxCols + 1);
@@ -170,18 +175,20 @@ int main() {
 
 		if (abs(xtran - finalTrans.xTranslate) / img_size.width < th && abs(ytran - finalTrans.yTranslate) / img_size.height < th&&
 			abs(scale - finalTrans.scale) < th && abs(theta - finalTrans.theta) / 180 < th) {
-			xtran = xtran*mul;
-			ytran = ytran*mul;
-			scale = 1-(1-scale)*mul;
-			theta = theta*mul;
-			src = Rand_Transform(test, theta, xtran, ytran, scale,0);
+			printf("MSC is right/n");
 		}
 		else {
 			printf("MSC is wrong\n");
 			flag = 0;
-			waitKey();
 		}
-		buf = 0;
+		//waitKey();
+		xtran = xtran*mul;
+		ytran = ytran*mul;
+		scale = 1 - (1 - scale)*mul;
+		theta = theta*mul;
+		src = Rand_Transform(test, theta, xtran, ytran, scale, 2);
+		//buf = 0;
+		cropped_memory_images.clear();
 		/*test = test1;
 		test = padImageMatrix(test, round(test.rows*1.5), round(test.cols*1.5));
 		src = Rand_Transform(test, theta, xtran, ytran, scale, 1);*/

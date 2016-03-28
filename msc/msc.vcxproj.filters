@@ -44,9 +44,6 @@
     <ClCompile Include="Learn_Image.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="MSC.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="region_of_interest.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -54,6 +51,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="main_framemsc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MSC_frame.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

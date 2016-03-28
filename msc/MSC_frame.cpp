@@ -20,10 +20,10 @@ using namespace cv;
 
 int layer_count;
 
-Mat affine_transformation;
+//Mat affine_transformation;
 double MAX_VAL = 255;
-Mat transformations;
-vector < Mat > transformation_set;
+//Mat transformations;
+//vector < Mat > transformation_set;
 
 /* layer control*/
 bool xTranslate_layer = 1;
@@ -34,9 +34,9 @@ bool scale_layer = 1;
 bool READFROMFILE =0;
 
 /* If not read the transformation from file, test all the possible parameters*/
-double xTranslate_step = 20;
-double yTranslate_step = 20;
-double rotate_step = 20;
+double xTranslate_step = 10;
+double yTranslate_step = 10;
+double rotate_step = 15;
 double scale_step = 10;
 
 vector<double> xT_val;
@@ -69,12 +69,153 @@ Mat C = (Mat_<double>(1,3) << 0, 0, 1);
 /* start scaling normalizer after all the rest layer are clear*/
 int startscale = 1;
 
-/* frame control*/
-int framectl = 1;
+void getTransform(Size img_size, vector < Mat > &transformation_set, vector< Mat > &G,TransformationSet lastTr = TransformationSet()) {
+	Mat affine_transformation;
+	Mat transformations;
+	int lcount = 0;
+	bool framectl = lastTr.nonIdenticalCount != -1;
+
+	double xTcenter = -lastTr.xTranslate;
+	double yTcenter = -lastTr.yTranslate;
+	double angcenter = -lastTr.theta;
+	double sccenter = lastTr.scale;
+	double xTrange = framectl ? 0.1*img_size.width : 0.8*img_size.width;
+	double yTrange = framectl ? 0.1*img_size.height : 0.8*img_size.height;
+	double rotrange = framectl ? 0.1*180 : 180;
+	double scrange = framectl ? 0.2 * (maxscale_para- minscale_para) : (maxscale_para - minscale_para);
+	if (framectl) {
+		xTranslate_step = max(5.0, round(xTranslate_step / 2));
+		yTranslate_step = max(5.0, round(yTranslate_step / 2));
+		rotate_step = max(5.0, round(rotate_step / 2));
+		scale_step = max(5.0, round(scale_step / 2));
+	}
+	if (xTranslate_layer == true) {
+		double xTranslate1 = xTcenter;
+		double xTranslate2 = xTcenter;
+		for (int i = 0; i <= ceil(xTranslate_step / 2); i++) {
+			affine_transformation = (Mat_<float>(1, 9) << 1, 0, xTranslate1, 0, 1, 0, 0, 0, 1);
+			transformations.push_back(affine_transformation);
+			xT_val.push_back(xTranslate1);
+			xTranslate1 += xTrange / xTranslate_step;
+			if (i != 0) {
+				affine_transformation = (Mat_<float>(1, 9) << 1, 0, xTranslate2, 0, 1, 0, 0, 0, 1);
+				transformations.push_back(affine_transformation);
+				xT_val.push_back(xTranslate2);
+			}
+			xTranslate2 -= xTrange / xTranslate_step;
+		}
+		transformation_set.push_back(transformations);
+		cout << transformations << endl;
+		transformations.release();
+		G.push_back(Mat::ones(Size(xT_val.size(), 1), CV_32FC1));
+		lcount++;
+		k_transformations[lcount - 1] = k_xTranslate;
+	}
+	if (yTranslate_layer == true) {
+		double yTranslate1 = yTcenter;
+		double yTranslate2 = yTcenter;
+		for (int i = 0; i <= ceil(yTranslate_step / 2); i++) {
+			affine_transformation = (Mat_<float>(1, 9) << 1, 0, 0, 0, 1, yTranslate1, 0, 0, 1);
+			transformations.push_back(affine_transformation);
+			yT_val.push_back(yTranslate1);
+			yTranslate1 += yTrange / yTranslate_step;
+			if (i != 0) {
+				affine_transformation = (Mat_<float>(1, 9) << 1, 0, 0, 0, 1, yTranslate2, 0, 0, 1);
+				transformations.push_back(affine_transformation);
+				yT_val.push_back(yTranslate2);
+			}
+			yTranslate2 -= yTrange / yTranslate_step;
+		}
+		transformation_set.push_back(transformations);
+		cout << transformations << endl;
+		transformations.release();
+		G.push_back(Mat::ones(Size(yT_val.size(), 1), CV_32FC1));
+		lcount++;
+		k_transformations[lcount - 1] = k_yTranslate;
+	}
+	if (rotate_layer == true) {
+		double theta1 = angcenter;
+		double theta2 = angcenter;
+		double thetad;
+		for (int i = 0; i <= ceil(rotate_step / 2); i++) {
+			thetad = theta1 * PI / 180;
+			affine_transformation = (Mat_<float>(1, 9) << cos(thetad), -sin(thetad), 0, sin(thetad), cos(thetad), 0, 0, 0, 1);
+			transformations.push_back(affine_transformation);
+			rot_val.push_back(theta1);
+			if (i != 0 && i != ceil(rotate_step / 2)) {
+				thetad = theta2 * PI / 180;
+				affine_transformation = (Mat_<float>(1, 9) << cos(thetad), -sin(thetad), 0, sin(thetad), cos(thetad), 0, 0, 0, 1);
+				transformations.push_back(affine_transformation);
+				rot_val.push_back(theta2);
+			}
+			theta1 += rotrange / rotate_step;
+			theta2 -= rotrange / rotate_step;
+		}
+		cout << transformations << endl;
+
+		transformation_set.push_back(transformations);
+		transformations.release();
+		G.push_back(Mat::ones(Size(rot_val.size(), 1), CV_32FC1));
+		lcount++;
+		k_transformations[lcount - 1] = k_rotate;
+	}
+	if (scale_layer == true) {
+		if (!framectl) {
+			double scale = 1;
+			for (int i = 0; i <= scale_step; i++) {
+				affine_transformation = (Mat_<float>(1, 9) << scale, 0, 0, 0, scale, 0, 0, 0, 1);
+				transformations.push_back(affine_transformation);
+				sc_val.push_back(scale);
+				scale -= (maxscale_para - minscale_para) / scale_step;
+			}
+		}
+		else {
+			double sc1 = sccenter;
+			double sc2 = sccenter;
+			for (int i = 0; i <= ceil(scale_step / 2); i++) {
+				affine_transformation = (Mat_<float>(1, 9) << sc1, 0, 0, 0, sc1, 0, 0, 0, 1);
+				transformations.push_back(affine_transformation);
+				sc_val.push_back(sc1);
+				sc1 += scrange / scale_step;
+				if (i != 0) {
+					affine_transformation = (Mat_<float>(1, 9) << sc2, 0, 0, 0, sc2, 0, 0, 0, 1);
+					transformations.push_back(affine_transformation);
+					sc_val.push_back(sc2);
+				}
+				sc2 -= scrange / scale_step;
+			}
+		}
+		//double scale1 = 1;
+		//double newscale;
+		//double temp = maxscale_para;
+		//maxscale_para = 1 / minscale_para;
+		//minscale_para = 1 / temp;
+		//for (int i = 0; i <= scale_step; i++) {
+		//	newscale = 1 / scale1;
+		//	affine_transformation = (Mat_<float>(1, 9) << newscale, 0, 0, 0, newscale, 0, 0, 0, 1);
+		//	transformations.push_back(affine_transformation);
+		//	sc_val.push_back(newscale);
+		//	scale1 += (maxscale_para - minscale_para) / scale_step;
+		//}
+		cout << transformations << endl;
+		transformation_set.push_back(transformations);
+		transformations.release();
+		G.push_back(Mat::ones(Size(sc_val.size(), 1), CV_32FC1));
+		lcount++;
+		k_transformations[lcount - 1] = k_scale;
+
+		/*push back 0 for k_scale first*/
+		//k_transformations[lcount - 1] = 0.01;
+	}
+}
 
 
 int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat *Bwd_Path, TransformationSet & finalTrans){
-    
+	Mat affine_transformation;
+	double MAX_VAL = 255;
+	Mat transformations;
+	vector < Mat > transformation_set;
+
     Mat G_layer; // Competition function values for each layer.
     vector< Mat > G; // The competition function
     int iteration_count = 100; // Number of iterations for which MSC will operate.
@@ -167,109 +308,8 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 			transformations.release();
 		}
 	}
-	else {
-		int lcount = 0;
-		if (xTranslate_layer == true) {
-			double xTranslate1 = 0;
-			double xTranslate2 = 0;
-			for (int i = 0; i <= ceil(xTranslate_step/2); i++) {
-				affine_transformation = (Mat_<float>(1, 9) << 1, 0, xTranslate1, 0, 1, 0, 0, 0, 1);
-				transformations.push_back(affine_transformation);
-				xT_val.push_back(xTranslate1);
-				xTranslate1 += 0.8*img_size.width / xTranslate_step;
-				if (i != 0) {
-					affine_transformation = (Mat_<float>(1, 9) << 1, 0, xTranslate2, 0, 1, 0, 0, 0, 1);
-					transformations.push_back(affine_transformation);
-					xT_val.push_back(xTranslate2);
-				}
-				xTranslate2 -= 0.8*img_size.width / xTranslate_step;
-			}
-			transformation_set.push_back(transformations);
-			//cout << transformations << endl;
-			transformations.release();
-			G.push_back(Mat::ones(Size(xT_val.size(), 1), CV_32FC1));
-			lcount++;
-			k_transformations[lcount - 1] = k_xTranslate;
-		}
-		if (yTranslate_layer == true) {
-			double yTranslate1 = 0;
-			double yTranslate2 = 0;
-			for (int i = 0; i <= ceil(yTranslate_step/2); i++) {
-				affine_transformation = (Mat_<float>(1, 9) << 1, 0, 0, 0, 1, yTranslate1, 0, 0, 1);
-				transformations.push_back(affine_transformation);
-				yT_val.push_back(yTranslate1);
-				yTranslate1 += 0.8*img_size.height / yTranslate_step;
-				if (i != 0) {
-					affine_transformation = (Mat_<float>(1, 9) << 1, 0, 0, 0, 1, yTranslate2, 0, 0, 1);
-					transformations.push_back(affine_transformation);
-					yT_val.push_back(yTranslate2);
-				}
-				yTranslate2 -= 0.8*img_size.height / yTranslate_step;
-			}
-			transformation_set.push_back(transformations);
-			//cout << transformations << endl;
-			transformations.release();
-			G.push_back(Mat::ones(Size(yT_val.size(), 1), CV_32FC1));
-			lcount++;
-			k_transformations[lcount - 1] = k_yTranslate;
-		}
-		if (rotate_layer == true) {
-			double theta1 = 0;
-			double theta2 = 0;
-			double thetad;
-			for (int i = 0; i <= ceil(rotate_step/2); i++) {
-				thetad = theta1 * PI/180;
-				affine_transformation = (Mat_<float>(1, 9) << cos(thetad), -sin(thetad), 0, sin(thetad), cos(thetad), 0, 0, 0, 1);
-				transformations.push_back(affine_transformation);
-				rot_val.push_back(theta1);
-				if (i != 0 && i!= ceil(rotate_step / 2)) {
-					thetad = theta2 * PI / 180;
-					affine_transformation = (Mat_<float>(1, 9) << cos(thetad), -sin(thetad), 0, sin(thetad), cos(thetad), 0, 0, 0, 1);
-					transformations.push_back(affine_transformation);
-					rot_val.push_back(theta2);
-				}
-				theta1 += 180 / rotate_step;
-				theta2 -= 180 / rotate_step;
-			}
-			//cout << transformations << endl;
-			transformation_set.push_back(transformations);
-			transformations.release();
-			G.push_back(Mat::ones(Size(rot_val.size(), 1), CV_32FC1));
-			lcount++;
-			k_transformations[lcount - 1] = k_rotate;
-		}
-		if (scale_layer == true) {
-			double scale = 1;
-			for (int i = 0; i <= scale_step; i++) {
-				affine_transformation = (Mat_<float>(1, 9) << scale, 0, 0, 0, scale, 0, 0, 0, 1);
-				transformations.push_back(affine_transformation);
-				sc_val.push_back(scale);
-				scale -= (maxscale_para - minscale_para) / scale_step;
-			}
-			//double scale1 = 1;
-			//double newscale;
-			//double temp = maxscale_para;
-			//maxscale_para = 1 / minscale_para;
-			//minscale_para = 1 / temp;
-			//for (int i = 0; i <= scale_step; i++) {
-			//	newscale = 1 / scale1;
-			//	affine_transformation = (Mat_<float>(1, 9) << newscale, 0, 0, 0, newscale, 0, 0, 0, 1);
-			//	transformations.push_back(affine_transformation);
-			//	sc_val.push_back(newscale);
-			//	scale1 += (maxscale_para - minscale_para) / scale_step;
-			//}
-			transformation_set.push_back(transformations);
-			cout << transformations << endl;
-			transformations.release();
-			G.push_back(Mat::ones(Size(sc_val.size(), 1), CV_32FC1));
-			lcount++;
-			k_transformations[lcount - 1] = k_scale;
-
-			/*push back 0 for k_scale first*/
-			//k_transformations[lcount - 1] = 0.01;
-		}
-	}
-
+	else 
+		getTransform(img_size, transformation_set, G, finalTrans);
 
 
 	for (int i = 0; i < Memory_Images.rows; i++) {
