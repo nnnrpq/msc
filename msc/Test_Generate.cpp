@@ -10,7 +10,7 @@ using namespace cv;
 #define PI 3.14159265
 int acc = 150;		/*number of random number within the range*/
 double maxscale = 1;	/*maximum scaling factor*/
-double minscale = 0.4;	/*minimum scaling factor*/
+double minscale = 0.5;	/*minimum scaling factor*/
 
 Mat Combine_Transform(Mat t1, Mat t2) {
 	/*apply t1 and then t2, the combined transformation matrix is returned*/
@@ -35,10 +35,10 @@ Mat Rand_Transform(Mat src, double & theta, double & xtranslate, double & ytrans
 		ytranslate = double(rand() % acc) / acc * src.rows*0.8 - round(0.4*src.rows);		/*ytranslate -0.5rows:rows/acc:0.5rows */
 		scale = double(rand() % acc) / acc*(maxscale - minscale) + minscale;
 
-		//scale = 0.616;
-		//theta = -55;
-		//ytranslate = 113;
-		//xtranslate = -111;
+	/*	scale = 0.616;
+		theta = -55;
+		ytranslate = 113;
+		xtranslate = -111;*/
 	}
 	else if (flag == 2) {	/* add small noise*/
 		theta += double(rand() % acc -acc/2) / acc * 2 * 90 *0.05;		

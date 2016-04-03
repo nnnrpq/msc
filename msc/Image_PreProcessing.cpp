@@ -88,7 +88,7 @@ Mat CannyThreshold_MemoryImages(Mat src_gray)
     Canny( detected_edges_canny, detected_edges_canny, lowThreshold, highThreshold, kernel_size );
     
     Mat croppedImage;
-    printf("src_gray size %d, %d\n", src_gray.rows, src_gray.cols);
+    //printf("src_gray size %d, %d\n", src_gray.rows, src_gray.cols);
     croppedImage = ROI_image(detected_edges_canny);
     
 	vector<vector<Point> > contours;

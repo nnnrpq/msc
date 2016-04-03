@@ -162,7 +162,7 @@
     <ClCompile Include="Image_PreProcessing.cpp" />
     <ClCompile Include="Learn_Image.cpp" />
     <ClCompile Include="main_framemsc.cpp" />
-    <ClCompile Include="MSC_frame.cpp" />
+    <ClCompile Include="MSC_Fast.cpp" />
     <ClCompile Include="region_of_interest.cpp" />
     <ClCompile Include="Test_Generate.cpp" />
   </ItemGroup>

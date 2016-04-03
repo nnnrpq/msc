@@ -53,7 +53,7 @@
     <ClCompile Include="main_framemsc.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="MSC_frame.cpp">
+    <ClCompile Include="MSC_Fast.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

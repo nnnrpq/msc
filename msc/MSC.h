@@ -29,7 +29,10 @@ public:
 };
 
 int SL_MSC(Mat , Mat , Size , Mat *, Mat *,TransformationSet &);
+
 int MapSeekingCircuit(Mat , Mat , Size , Mat *, Mat *, int, vector< Mat > , vector< Mat > *, double []);
+int MapSeekingCircuit(Mat, Mat, Size, Mat *, Mat *, int, vector< Mat >, vector< Mat >, vector< Mat > *, double[]);
+
 int Verify_Image(Mat , Mat );
 Fwd_Path_Values ForwardTransform(Mat , Mat ,Mat,Mat &  );
 Mat BackwardTransform(Mat , Mat , Mat );

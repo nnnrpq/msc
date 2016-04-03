@@ -48,6 +48,9 @@ int main() {
 	struct dirent *ent;
 	vector< filename_struct > filename_vector;
 
+	Mat C = (Mat_<double>(2, 3) << 0, 0, 1,2,3,4);
+
+
 	Mat test = imread("img_1.png", CV_LOAD_IMAGE_GRAYSCALE);
 	//Mat test = imread("templatePY.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 
@@ -84,7 +87,7 @@ int main() {
 		// The image pixel values should be in range between 0 and 1. Therefore, performing the
 		// threshold function on the edge detected image.
 		threshold(Edge_Detected_Image_GrayScale, Edge_Detected_Image_unpadded, Thresh_VAL, MAX_VAL, THRESH_BINARY);
-		printf("Edge detect image done Size is (%d, %d)\n", Edge_Detected_Image_unpadded.rows, Edge_Detected_Image_unpadded.cols);
+		//printf("Edge detect image done Size is (%d, %d)\n", Edge_Detected_Image_unpadded.rows, Edge_Detected_Image_unpadded.cols);
 
 		/// MSC implementation
 			// This indicates that there are images already present in the memory.
@@ -132,14 +135,14 @@ int main() {
 		//Resize the input image as well the memory images
 		Mat Edge_Detected_Image(maxRows + 1, maxCols + 1, CV_32FC1);
 		Edge_Detected_Image = padImageMatrix(Edge_Detected_Image_unpadded, maxRows + 1, maxCols + 1);
-		imshow("random image", Edge_Detected_Image*255);
+		//imshow("random image", Edge_Detected_Image*255);
 		for (int i = 0; i < buf; i++) {
 			// Before padding the image, keep the edge image values at 1 and background as 0.
 			Mat paddedImage = padImageMatrix(cropped_memory_images[i], maxRows + 1, maxCols + 1);
 			Memory_Images.push_back(paddedImage.reshape(0, 1));
-			imshow("template image", paddedImage*255);
-			waitKey();
-			printf("The values of padded image %d, %d \n", paddedImage.rows, paddedImage.cols);
+			//imshow("template image", paddedImage*255);
+			//waitKey();
+			//printf("The values of padded image %d, %d \n", paddedImage.rows, paddedImage.cols);
 		}
 		img_size = Size(maxCols + 1, maxRows + 1);
 
@@ -148,6 +151,7 @@ int main() {
 		//// The actual MSC will go over here.
 		if (!framectl)
 			finalTrans.nonIdenticalCount = -1;
+		Edge_Detected_Image.convertTo(Edge_Detected_Image, CV_32FC1);
 		int ret = SL_MSC(Edge_Detected_Image, Memory_Images, img_size, &Fwd_Image, &Bwd_Image, finalTrans);
 		
 		//Mat paddedImage = padImageMatrix(cropped_memory_images[0], maxRows + 1, maxCols + 1);
@@ -169,13 +173,13 @@ int main() {
 		printf("the target scale is %f, msc result is %f\n", scale, finalTrans.scale);
 
 		// Get the returned address Images.
-		imshow("Forward Path", Fwd_Image * 255);
-		imshow("Backward Path", Bwd_Image * 255);
+		//imshow("Forward Path", Fwd_Image * 255);
+		imshow("Backward Path", (Edge_Detected_Image +Bwd_Image) * 255);
 		waitKey(0);
 
 		if (abs(xtran - finalTrans.xTranslate) / img_size.width < th && abs(ytran - finalTrans.yTranslate) / img_size.height < th&&
 			abs(scale - finalTrans.scale) < th && abs(theta - finalTrans.theta) / 180 < th) {
-			printf("MSC is right/n");
+			printf("MSC is right\n");
 		}
 		else {
 			printf("MSC is wrong\n");
