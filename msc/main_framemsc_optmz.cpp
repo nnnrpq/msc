@@ -14,6 +14,19 @@
 #include "Generate_Image.h"
 #include "Learn_Image.h"
 
+
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
+//#ifdef _DEBUG
+//#ifndef DBG_NEW
+//#define DBG_NEW new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
+//#define new DBG_NEW
+//#endif
+//#endif  // _DEBUG
+
+
 using namespace std;
 using namespace cv;
 
@@ -75,7 +88,7 @@ int main() {
 	TransformationSet finalTrans;
 	finalTrans.nonIdenticalCount = -1;
 	int count = 0;
-	int maxiter = 20;
+	int maxiter = 10;
 	UINT t1, t2;
 	do {
 		if (count == 1)
@@ -186,8 +199,8 @@ int main() {
 
 		// Get the returned address Images.
 		//imshow("Forward Path", Fwd_Image * 255);
-		/*imshow("Backward Path", (Edge_Detected_Image +Bwd_Image) * 255);
-		waitKey(0);*/
+		//imshow("Backward Path", (Edge_Detected_Image +Bwd_Image) * 255);
+		//waitKey(0);
 
 		if (abs(xtran - finalTrans.xTranslate) / img_size.width < th && abs(ytran - finalTrans.yTranslate) / img_size.height < th&&
 			abs(scale - finalTrans.scale) < th && abs(theta - finalTrans.theta) / 180 < th) {
@@ -211,6 +224,9 @@ int main() {
 		count++;
 	} while (count<maxiter);
 	t2 = clock();
+
+//	_CrtDumpMemoryLeaks();
+
 	printf("MSC is done\n");
 	printf("time for %d iterations is %d\n", count, t2 - t1);
 	getchar();

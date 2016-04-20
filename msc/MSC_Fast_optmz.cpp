@@ -71,7 +71,8 @@ Mat C = (Mat_<double>(1,3) << 0, 0, 1);
 /* start scaling normalizer after all the rest layer are clear*/
 int startscale = 1;
 
-void getTransform(Size img_size, vector < Mat > &transformation_set, vector< Mat > &G,TransformationSet lastTr = TransformationSet()) {
+void getTransform(Size img_size, vector < Mat > &transformation_set, vector< Mat > &G,TransformationSet lastTr = TransformationSet())
+ {
 	Mat affine_transformation;
 	Mat transformations;
 	int lcount = 0;
@@ -439,6 +440,10 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 	else 
 		getTransform(img_size, transformation_set, G, finalTrans);
 
+	//transformation_set.clear();
+
+	vector<Mat>().swap(transformation_set);
+
 	/* get the mapping for transformation*/
 	vector<Mat> MapForw, MapBack;
 	getTransMap(img_size, FORWARD, MapForw);
@@ -535,10 +540,24 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
     }
 	ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, MapForw, MapBack, &G, k_transformations);
 	printf("The value of verified_ret is %g\n", verified_ret);
-	xT_val.clear();
-	yT_val.clear();
-	rot_val.clear();
-	sc_val.clear();
+
+	//xT_val.clear();
+	//yT_val.clear();
+	//rot_val.clear();
+	//sc_val.clear();
+
+	vector<double>().swap(xT_val);
+	vector<double>().swap(yT_val);
+	vector<double>().swap(rot_val);
+	vector<double>().swap(sc_val);
+
+	//MapForw.clear();
+	vector<Mat>().swap(MapForw);
+	//MapBack.clear();
+	//G.clear();
+	vector<Mat>().swap(MapBack);
+	vector<Mat>().swap(G);
+
     return ret;
     
 }
@@ -604,10 +623,19 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
  //   //imshow("BPV[1]", (BPV[0])*255);
 	//waitKey();
  //   
-    *Fwd_Path = FPV[layers-1].Fwd_Superposition;
-    *Bwd_Path = BPV[0];
+    *Fwd_Path = FPV[layers-1].Fwd_Superposition.clone();
+    *Bwd_Path = BPV[0].clone();
     
     *G = g;
+
+	delete[] FPV;
+
+	for (int i = 0; i < layers; i++) {
+		BPV[i].release();
+		TranSc[i].release();
+	}
+
+	
     return 0;
 }
 
@@ -626,6 +654,7 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat transMap, Mat g, Mat &Transc){
     g.convertTo(g,CV_32F);
 
 	Mat temp;
+	Mat retTemp;
 
     //dst = In.clone();
     SuperPosition = Mat::zeros(In.rows, In.cols, CV_32FC1);
@@ -644,7 +673,7 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat transMap, Mat g, Mat &Transc){
 		Mat dst(In.rows, In.cols, CV_32F);
 		if (g.at<float>(0, i) == 0) {
 			Mat temp1 = Mat::zeros(Size((In.rows)*(In.cols),1), CV_32F);
-			FPV_return.Transformed_Templates.push_back(temp1);
+			retTemp.push_back(temp1);
 			Transc.push_back(1.0);
 			continue;
 		}
@@ -717,9 +746,12 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat transMap, Mat g, Mat &Transc){
         Mat dst_scaled = g.at<float>(0,i)*dst;
         SuperPosition = SuperPosition + dst_scaled;
 
-        FPV_return.Transformed_Templates.push_back(dst_scaled.reshape(0,1));
+		retTemp.push_back(dst_scaled.reshape(0,1));
+
+
         dst.release();
     }
+	FPV_return.Transformed_Templates = retTemp.clone();
     //SuperPosition.convertTo(SuperPosition,CV_8U);
     threshold(SuperPosition, SuperPosition, Thresh_VAL, MAX_VAL, THRESH_TRUNC);
     FPV_return.Fwd_Superposition = SuperPosition.clone();
@@ -773,6 +805,7 @@ Mat BackwardTransform(Mat In, Mat transMap, Mat g){
 		
         Mat dst_scaled = g.at<float>(0,i)*dst;
         SuperPosition = SuperPosition + dst_scaled;
+
         dst.release();
     }
     //SuperPosition.convertTo(SuperPosition,CV_32FC1);

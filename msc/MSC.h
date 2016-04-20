@@ -11,6 +11,10 @@ class Fwd_Path_Values{
 public:
     Mat Fwd_Superposition;
     Mat Transformed_Templates;
+	~Fwd_Path_Values() {
+		Fwd_Superposition.release();
+		Transformed_Templates.release();
+	}
 };
 class TransformationSet {
 public:
