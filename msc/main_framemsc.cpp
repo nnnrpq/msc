@@ -7,6 +7,7 @@
 #include <iostream>
 #include "./Image_PreProcessing.h"
 #include <vector>
+#include <ctime>
 #include "MSC.h"
 //#include <Windows.h>
 #include "dirent.h"
@@ -18,7 +19,7 @@ using namespace cv;
 
 Mat src, src_gray;
 Mat dst;
-double mul = 0.8;		/* the rate of updating the test image*/
+double mul = 0.9;		/* the rate of updating the test image*/
 double th = 0.15;		/* threshold for whether a transformation from msc is qualified*/					
 int framectl = 1;		/* frame control*/
 
@@ -51,6 +52,7 @@ int main() {
 	Mat C = (Mat_<double>(2, 3) << 0, 0, 1,2,3,4);
 
 
+	// test = imread("apriltag0.png", CV_LOAD_IMAGE_GRAYSCALE);
 	Mat test = imread("img_1.png", CV_LOAD_IMAGE_GRAYSCALE);
 	//Mat test = imread("templatePY.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 
@@ -72,7 +74,12 @@ int main() {
 	buf = 1;
 	TransformationSet finalTrans;
 	finalTrans.nonIdenticalCount = -1;
+	int count = 0;
+	int maxiter = 10;
+	UINT t1, t2;
 	do {
+		if (count == 1)
+			t1 = clock();
 		//imshow("random image", src);
 		//waitKey();
 
@@ -196,9 +203,12 @@ int main() {
 		/*test = test1;
 		test = padImageMatrix(test, round(test.rows*1.5), round(test.cols*1.5));
 		src = Rand_Transform(test, theta, xtran, ytran, scale, 1);*/
-	} while (1);
+		count++;
+	} while (count<maxiter);
+	t2 = clock();
 	printf("MSC is done\n");
-
+	printf("time for %d iterations is %d\n", count, t2 - t1);
+	getchar();
 	return 0;
 
 }

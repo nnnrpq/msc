@@ -86,8 +86,8 @@ void getTransform(Size img_size, vector < Mat > &transformation_set, vector< Mat
 	double rotrange = framectl ? 0.4*180 : 180;
 	double scrange = framectl ? 0.4 * (maxscale_para- minscale_para) : (maxscale_para - minscale_para);
 	if (framectl) {
-		xTranslate_step = max(3.0, round(xTranslate_step / 2));
-		yTranslate_step = max(3.0, round(yTranslate_step / 2));
+		xTranslate_step = max(2.0, round(xTranslate_step / 2));
+		yTranslate_step = max(2.0, round(yTranslate_step / 2));
 		rotate_step = max(2.0, round(rotate_step / 2));
 		scale_step = max(2.0, round(scale_step / 2));
 	}
@@ -107,7 +107,7 @@ void getTransform(Size img_size, vector < Mat > &transformation_set, vector< Mat
 			xTranslate2 -= xTrange / xTranslate_step;
 		}
 		transformation_set.push_back(transformations);
-		cout << transformations << endl;
+		//cout << transformations << endl;
 		transformations.release();
 		G.push_back(Mat::ones(Size(xT_val.size(), 1), CV_32FC1));
 		lcount++;
@@ -129,7 +129,7 @@ void getTransform(Size img_size, vector < Mat > &transformation_set, vector< Mat
 			yTranslate2 -= yTrange / yTranslate_step;
 		}
 		transformation_set.push_back(transformations);
-		cout << transformations << endl;
+		//cout << transformations << endl;
 		transformations.release();
 		G.push_back(Mat::ones(Size(yT_val.size(), 1), CV_32FC1));
 		lcount++;
@@ -153,7 +153,7 @@ void getTransform(Size img_size, vector < Mat > &transformation_set, vector< Mat
 			theta1 += rotrange / rotate_step;
 			theta2 -= rotrange / rotate_step;
 		}
-		cout << transformations << endl;
+		//cout << transformations << endl;
 
 		transformation_set.push_back(transformations);
 		transformations.release();
@@ -199,7 +199,7 @@ void getTransform(Size img_size, vector < Mat > &transformation_set, vector< Mat
 		//	sc_val.push_back(newscale);
 		//	scale1 += (maxscale_para - minscale_para) / scale_step;
 		//}
-		cout << transformations << endl;
+		//cout << transformations << endl;
 		transformation_set.push_back(transformations);
 		transformations.release();
 		G.push_back(Mat::ones(Size(sc_val.size(), 1), CV_32FC1));
@@ -655,7 +655,6 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat transMap, Mat g, Mat &Transc){
 			else
 				ptdst[n] = ptIn[ptidx[n]];
 		}
-
  //       Mat Perspective_Transformation_Matrix_2D = Perspective_Transformation_Matrix.row(i).reshape(0,3);
  //       
  //       sine = -Perspective_Transformation_Matrix_2D.at<float>(0,1);
@@ -685,6 +684,7 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat transMap, Mat g, Mat &Transc){
  //       }
 
 		Transc.push_back(sqrt(double(countNonZero(In)) / double(countNonZero(dst))));
+		//Transc.push_back(1.0);
 
 		if (0) {
 			dst.convertTo(temp, CV_8U, 255);
@@ -835,8 +835,10 @@ Mat UpdateCompetition(Mat Transformed_Templates, Mat BackwardTransform, Mat g, i
         }else{
             q.at<double>(0,i) = 0;
         }
-		if (TranSc.at<double>(i, 0) < 1)
-			p = 1.5;
+		if (startscale)
+			if (TranSc.at<double>(i, 0) < 1)
+				p = 1.5;
+
     }
 
     //cout<<"q: "<<q<<endl;
