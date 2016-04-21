@@ -11,7 +11,7 @@
 #include"MSC.h"
 #include"Learn_Image.h"
 #include "Image_PreProcessing.h"
-
+#include <ctime>
 
 #define PI 3.14159265
 
@@ -70,6 +70,8 @@ Mat C = (Mat_<double>(1,3) << 0, 0, 1);
 /* scaling control*/
 /* start scaling normalizer after all the rest layer are clear*/
 int startscale = 1;
+
+uint32_t t_total, t_loop;
 
 void getTransform(Size img_size, vector < Mat > &transformation_set, vector< Mat > &G,TransformationSet lastTr = TransformationSet())
  {
@@ -340,6 +342,9 @@ void getTransMap(Size img_size, int flag, vector<Mat> &ResultMap) {
 }
 
 int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat *Bwd_Path, TransformationSet & finalTrans){
+	t_total = clock();
+	t_loop = 0;
+
 	Mat affine_transformation;
 	double MAX_VAL = 255;
 	Mat transformations;
@@ -460,7 +465,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 	int count = 0;
     while(iteration_count > 0){
         iteration_count--;
-        printf("About to call MSC %d\n",count++);
+        //printf("About to call MSC %d\n",count++);
         ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, MapForw,MapBack, &G, k_transformations);
         
 		bool flag = 1;		/* 1 for stopping the msc*/
@@ -539,7 +544,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
          */
     }
 	ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, MapForw, MapBack, &G, k_transformations);
-	printf("The value of verified_ret is %g\n", verified_ret);
+	//printf("The value of verified_ret is %g\n", verified_ret);
 
 	//xT_val.clear();
 	//yT_val.clear();
@@ -558,6 +563,9 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 	vector<Mat>().swap(MapBack);
 	vector<Mat>().swap(G);
 
+	t_total = clock()-t_total;
+
+	printf("it takes %d/%d for loop\n", t_loop, t_total);
     return ret;
     
 }
@@ -679,6 +687,7 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat transMap, Mat g, Mat &Transc){
 		}
 
 		//cout << transMap << endl;
+		uint32_t t_temp = clock();
 		float* ptdst = (float*)dst.data;
 		float* ptIn = (float*)In.data;
 		int* ptidx = transMap.ptr<int>(i);
@@ -690,6 +699,7 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat transMap, Mat g, Mat &Transc){
 			else
 				ptdst[n] = ptIn[ptidx[n]];
 		}
+		t_loop += clock() - t_temp;
  //       Mat Perspective_Transformation_Matrix_2D = Perspective_Transformation_Matrix.row(i).reshape(0,3);
  //       
  //       sine = -Perspective_Transformation_Matrix_2D.at<float>(0,1);
@@ -776,12 +786,14 @@ Mat BackwardTransform(Mat In, Mat transMap, Mat g){
     //SuperPosition = g.at<float>(0,0)*In.clone();
 	//SuperPosition.convertTo(SuperPosition, CV_32F);
 
+//#pragma omp parallel for
     for(int i=0; i<count; i++){
 		Mat dst(In.rows, In.cols, CV_32F);
 		if (g.at<float>(0, i) == 0) {
 			continue;
 		}
 
+		uint32_t t_temp = clock();
 		float* ptdst = (float*)dst.data;
 		float* ptIn = (float*)In.data;
 		int* ptidx = transMap.ptr<int>(i);
@@ -793,6 +805,7 @@ Mat BackwardTransform(Mat In, Mat transMap, Mat g){
 			else
 				ptdst[n] = ptIn[ptidx[n]];
 		}
+		t_loop += clock() - t_temp;
 
 		if (test_back) {
 			imshow("In", g.at<float>(0, i)*In * 255);
