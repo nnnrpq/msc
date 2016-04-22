@@ -88,7 +88,7 @@ int main() {
 	TransformationSet finalTrans;
 	finalTrans.nonIdenticalCount = -1;
 	int count = 0;
-	int maxiter = 10;
+	int maxiter = 20;
 	UINT t1, t2;
 	do {
 		if (count == 1)
@@ -161,14 +161,7 @@ int main() {
 		Edge_Detected_Image = padImageMatrix(Edge_Detected_Image_unpadded, maxRows + 1, maxCols + 1);
 		//imshow("random image", Edge_Detected_Image*255);
 
-		//for (int i = 0; i < buf; i++) {
-		//	// Before padding the image, keep the edge image values at 1 and background as 0.
-		//	Mat paddedImage = padImageMatrix(cropped_memory_images[i], maxRows + 1, maxCols + 1);
-		//	Memory_Images.push_back(paddedImage.reshape(0, 1));
-		//	//imshow("template image", paddedImage*255);
-		//	//waitKey();
-		//	//printf("The values of padded image %d, %d \n", paddedImage.rows, paddedImage.cols);
-		//}
+
 		img_size = Size(maxCols + 1, maxRows + 1);
 
 		Memory_Images = padImageMatrix(cropped_memory_images, maxRows + 1, maxCols + 1);
@@ -179,11 +172,6 @@ int main() {
 		Edge_Detected_Image.convertTo(Edge_Detected_Image, CV_32FC1);
 		int ret = SL_MSC(Edge_Detected_Image, Memory_Images, img_size, &Fwd_Image, &Bwd_Image, finalTrans);
 		
-		//Mat paddedImage = padImageMatrix(cropped_memory_images[0], maxRows + 1, maxCols + 1);
-		//// The actual MSC will go over here.
-		//TransformationSet finalTrans;
-		//int ret = SL_MSC(paddedImage, Edge_Detected_Image.reshape(0,1), img_size, &Fwd_Image, &Bwd_Image, finalTrans);
-
 
 
 		
@@ -217,10 +205,6 @@ int main() {
 		theta = theta*mul;
 		src = Rand_Transform(test, theta, xtran, ytran, scale, 2);
 		//buf = 0;
-		//cropped_memory_images.releas();
-		/*test = test1;
-		test = padImageMatrix(test, round(test.rows*1.5), round(test.cols*1.5));
-		src = Rand_Transform(test, theta, xtran, ytran, scale, 1);*/
 		count++;
 	} while (count<maxiter);
 	t2 = clock();
