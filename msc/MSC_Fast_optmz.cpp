@@ -487,7 +487,8 @@ Mat UpdateCompetition(Mat Transformed_Templates, Mat BackwardTransform, Mat g, i
 		}
         Mat T = Transformed_Templates.row(i).reshape(0,r);
         T.convertTo(T,CV_32FC1);
-        T_L2 = norm(T, NORM_L2);
+        //T_L2 = norm(T, NORM_L2);
+		T_L2 = sum(T)[0];
 		//T_L2 = sum(T)[0];
         //BackwardTransform_L2 = norm(BackwardTransform, NORM_L2);
 		BackwardTransform_L2 = sum(BackwardTransform)[0];
