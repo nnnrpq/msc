@@ -66,6 +66,7 @@ double *k_transformations;
 Mat C = (Mat_<double>(1,3) << 0, 0, 1);
 #define FORWARD 1
 #define BACKWARD -1
+Fwd_Path_Values *FPV;
 
 /* scaling control*/
 /* start scaling normalizer after all the rest layer are clear*/
@@ -122,6 +123,13 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 
 
 	int* idxTrans = new int[layer_count - 1];
+
+	FPV = new Fwd_Path_Values[layer_count];
+	FPV[0].Fwd_Superposition = Input_Image.clone();
+	for (int i = 1; i < layer_count; i++) {
+		FPV[i].Fwd_Superposition = Mat::zeros(Input_Image.rows, Input_Image.cols, CV_32F);
+		FPV[i].Transformed_Templates = Mat::zeros(Size(Input_Image.rows*Input_Image.cols, G[i-1].cols), CV_32F);
+	}
 
 	int count = 0;
     while(iteration_count > 0){
@@ -216,7 +224,7 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
     
     vector< Mat > g = *G;
     
-    Fwd_Path_Values *FPV = new Fwd_Path_Values[layers];
+    //Fwd_Path_Values *FPV = new Fwd_Path_Values[layers];
     
     Mat *BPV = new Mat[layers];
 
@@ -232,7 +240,8 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
      ]
      */
     
-    FPV[0].Fwd_Superposition = Input_Image.clone();
+    //FPV[0].Fwd_Superposition = Input_Image.clone();
+	//FPV[1].Transformed_Templates = Mat::zeros(Size(Input_Image.rows*Input_Image.cols, g[0].cols), CV_32F);
     
     //printf("Backward path superposition \n");
    // BPV[layers-1] = Superimpose_Memory_Images(Memory_Images, g[layers-1], img_size.height).clone();
@@ -247,13 +256,14 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
         for(int i = 1; i < layers; i++){
             // Perform all of the forward path transformations
 			TranSc[i - 1] = Mat(Size(g[i-1].cols, 1), CV_32F);
-            FPV[i] = ForwardTransform(FPV[i-1].Fwd_Superposition, MapForw[i-1], g[i-1],TranSc[i-1]);
+            FPV[i] = ForwardTransform(FPV[i-1].Fwd_Superposition, FPV[i], MapForw[i-1], g[i-1],TranSc[i-1]);
 			//cout << TranSc[i - 1];
             // Perform all of the backward path transformations
             BPV[layers-1-i] = BackwardTransform(BPV[layers-i], MapBack[layers - 1 - i], g[layers-1-i]);
         }
         
         //printf("Update competition function\n");
+//#pragma omp parallel for
         for(int i = 1; i < layers; i++){
             // Update competition
             g[i-1] = UpdateCompetition(FPV[i].Transformed_Templates, BPV[i], g[i-1], img_size.height, k_transformations[i-1], TranSc[i - 1]).clone();
@@ -276,7 +286,7 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
     
     *G = g;
 
-	delete[] FPV;
+	//delete[] FPV;
 
 	for (int i = 0; i < layers; i++) {
 		BPV[i].release();
@@ -288,7 +298,7 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
 }
 
 
-Fwd_Path_Values ForwardTransform(Mat In, Mat transMap, Mat g, Mat &Transc){
+Fwd_Path_Values ForwardTransform(Mat In, Fwd_Path_Values & InFP, Mat transMap, Mat g, Mat &Transc){
     Fwd_Path_Values FPV_return;
     Mat SuperPosition;
     Mat TransformedTemplates;
@@ -302,12 +312,11 @@ Fwd_Path_Values ForwardTransform(Mat In, Mat transMap, Mat g, Mat &Transc){
     g.convertTo(g,CV_32F);
 
 	Mat temp;
-	Mat retTemp = Mat::zeros(Size(In.rows*In.cols,count),CV_32F);
+	//Mat retTemp = Mat::zeros(Size(In.rows*In.cols,count),CV_32F);
+	Mat& retTemp = InFP.Transformed_Templates;
 
     //dst = In.clone();
-    SuperPosition = Mat::zeros(In.rows, In.cols, CV_32FC1);
-
-
+    SuperPosition = InFP.Fwd_Superposition.setTo(0);
 
 	
 
@@ -721,18 +730,20 @@ void getTransMap(Size img_size, int flag, vector<Mat> &ResultMap) {
 	else {
 		printf("wrong flag\n"); exit(0);
 	}
+	int height = img_size.height;
+	int width = img_size.width;
 
 	if (xTranslate_layer) {
 		Mat Map(xT_val.size(), pixcount, CV_32SC1);
 		for (int k = 0; k < xT_val.size(); k++) {
 			/* for all the xtranslations*/
 			pos = 0;
-			Mat temp(img_size.height, img_size.width, CV_32SC1);
+			Mat temp(height, width, CV_32SC1);
 			int* pt = (int*)temp.data;
 			int xT = round(xT_val[k])*flag;
-			for (int i = 0; i < img_size.height; i++) {
-				for (int j = 0; j < img_size.width; j++) {
-					if (j - xT<0 || j - xT >= img_size.width) {
+			for (int i = 0; i < height; i++) {
+				for (int j = 0; j < width; j++) {
+					if (j - xT<0 || j - xT >= width) {
 						pt[pos] = -1;
 					}
 					else {
@@ -754,16 +765,16 @@ void getTransMap(Size img_size, int flag, vector<Mat> &ResultMap) {
 		for (int k = 0; k < yT_val.size(); k++) {
 			/* for all the ytranslations*/
 			pos = 0;
-			Mat temp(img_size.height, img_size.width, CV_32SC1);
+			Mat temp(height, width, CV_32SC1);
 			int* pt = (int*)temp.data;
 			int yT = round(yT_val[k])*flag;
-			for (int i = 0; i < img_size.height; i++) {
-				for (int j = 0; j < img_size.width; j++) {
-					if (i < yT || i - yT >= img_size.height) {
+			for (int i = 0; i < height; i++) {
+				for (int j = 0; j < width; j++) {
+					if (i < yT || i - yT >= height) {
 						pt[pos] = -1;
 					}
 					else {
-						pt[pos] = pos - img_size.width*yT;
+						pt[pos] = pos - width*yT;
 					}
 					pos++;
 				}
@@ -778,23 +789,23 @@ void getTransMap(Size img_size, int flag, vector<Mat> &ResultMap) {
 		for (int k = 0; k < rot_val.size(); k++) {
 			/* for all the rotation*/
 			pos = 0;
-			Mat temp(img_size.height, img_size.width, CV_32SC1);
+			Mat temp(height, width, CV_32SC1);
 			int* pt = (int*)temp.data;
 			double ang = rot_val[k] * flag*PI / 180;
 			int x, y, newx, newy;
 			double cosang, sinang;
-			for (int i = 0; i < img_size.height; i++) {
-				for (int j = 0; j < img_size.width; j++) {
-					x = j - img_size.width / 2;
-					y = i - img_size.height / 2;
+			for (int i = 0; i < height; i++) {
+				for (int j = 0; j < width; j++) {
+					x = j - width / 2;
+					y = i - height / 2;
 					cosang = cos(ang);
 					sinang = sin(ang);
 					newx = cosang*x - sinang*y;
 					newy = sinang*x + cosang*y;
-					if (abs(newx) >= img_size.width / 2 || abs(newy) >= img_size.height / 2)
+					if (abs(newx) >= width / 2 || abs(newy) >= height / 2)
 						pt[pos] = -1;
 					else
-						pt[pos] = floor(newx + img_size.width / 2) + floor(newy + img_size.height / 2)*img_size.width;
+						pt[pos] = floor(newx + width / 2.0) + floor(newy + height / 2.0)*width;
 					pos++;
 				}
 			}
@@ -808,20 +819,20 @@ void getTransMap(Size img_size, int flag, vector<Mat> &ResultMap) {
 		for (int k = 0; k < sc_val.size(); k++) {
 			/* for all the rotation*/
 			pos = 0;
-			Mat temp(img_size.height, img_size.width, CV_32SC1);
+			Mat temp(height, width, CV_32SC1);
 			int* pt = (int*)temp.data;
 			double sc = flag == 1 ? sc_val[k] : 1 / sc_val[k];
 			int x, y, newx, newy, cosang, sinang;
-			for (int i = 0; i < img_size.height; i++) {
-				for (int j = 0; j < img_size.width; j++) {
-					x = j - img_size.width / 2;
-					y = i - img_size.height / 2;
+			for (int i = 0; i < height; i++) {
+				for (int j = 0; j < width; j++) {
+					x = j - width / 2;
+					y = i - height / 2;
 					newx = sc*x;
 					newy = sc*y;
-					if (abs(newx) >= img_size.width / 2 || abs(newy) >= img_size.height / 2)
+					if (abs(newx) >= width / 2 || abs(newy) >= height / 2)
 						pt[pos] = -1;
 					else
-						pt[pos] = floor(newx + img_size.width / 2) + floor(newy + img_size.height / 2)*img_size.width;
+						pt[pos] = floor(newx + width / 2.0) + floor(newy + height / 2.0)*width;
 					pos++;
 				}
 			}

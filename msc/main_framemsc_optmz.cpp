@@ -175,15 +175,15 @@ int main() {
 
 
 		
-		printf("The return value of SL_MSC is %d\n", ret);
+		//printf("The return value of SL_MSC is %d\n", ret);
 
 
 		/* check the result of msc and update image*/
 		flag = finalTrans.nonIdenticalCount != 0;
-		printf("the target xtran is %f, msc result is %f\n", xtran, finalTrans.xTranslate);
-		printf("the target ytran is %f, msc result is %f\n", ytran, finalTrans.yTranslate);
-		printf("the target theta is %f, msc result is %f\n", theta, finalTrans.theta);
-		printf("the target scale is %f, msc result is %f\n", scale, finalTrans.scale);
+		//printf("the target xtran is %f, msc result is %f\n", xtran, finalTrans.xTranslate);
+		//printf("the target ytran is %f, msc result is %f\n", ytran, finalTrans.yTranslate);
+		//printf("the target theta is %f, msc result is %f\n", theta, finalTrans.theta);
+		//printf("the target scale is %f, msc result is %f\n", scale, finalTrans.scale);
 
 		// Get the returned address Images.
 		//imshow("Forward Path", Fwd_Image * 255);
