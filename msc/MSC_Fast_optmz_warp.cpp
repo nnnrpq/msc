@@ -111,14 +111,14 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 
 	//transformation_set.clear();
 
-	vector<Mat>().swap(transformation_set);
+	//vector<Mat>().swap(transformation_set);
 
 	/* get the mapping for transformation*/
-	vector<Mat> MapForw, MapBack;
-	MapForw.reserve(layer_count - 1);
-	MapBack.reserve(layer_count - 1);
-	getTransMap(img_size, FORWARD, MapForw);
-	getTransMap(img_size, BACKWARD, MapBack);
+	//vector<Mat> MapForw, MapBack;
+	//MapForw.reserve(layer_count - 1);
+	//MapBack.reserve(layer_count - 1);
+	//getTransMap(img_size, FORWARD, MapForw);
+	//getTransMap(img_size, BACKWARD, MapBack);
 
 
 
@@ -135,7 +135,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
     while(iteration_count > 0){
         iteration_count--;
         //printf("About to call MSC %d\n",count++);
-        ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, MapForw,MapBack, &G, k_transformations);
+        ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, transformation_set, &G, k_transformations);
         
 		bool flag = 1;		/* 1 for stopping the msc*/
         if(iteration_count %5 == 0){
@@ -193,7 +193,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
         }
          */
     }
-	ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, MapForw, MapBack, &G, k_transformations);
+	ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, transformation_set, &G, k_transformations);
 	//printf("The value of verified_ret is %g\n", verified_ret);
 
 	//xT_val.clear();
@@ -207,10 +207,10 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 	vector<double>().swap(sc_val);
 
 	//MapForw.clear();
-	vector<Mat>().swap(MapForw);
+	//vector<Mat>().swap(MapForw);
 	//MapBack.clear();
 	//G.clear();
-	vector<Mat>().swap(MapBack);
+	//vector<Mat>().swap(MapBack);
 	vector<Mat>().swap(G);
 
 	t_total = clock()-t_total;
@@ -220,7 +220,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
     
 }
 
-int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat *Bwd_Path, int layers, vector< Mat > MapForw, vector<Mat> MapBack, vector< Mat > *G, double k_transformations[]){
+int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat *Bwd_Path, int layers, vector< Mat > image_transformations, vector< Mat > *G, double k_transformations[]){
     
     vector< Mat > g = *G;
     
@@ -256,10 +256,10 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
         for(int i = 1; i < layers; i++){
             // Perform all of the forward path transformations
 			TranSc[i - 1] = Mat(Size(g[i-1].cols, 1), CV_32F);
-            FPV[i] = ForwardTransform(FPV[i-1].Fwd_Superposition, FPV[i], MapForw[i-1], g[i-1],TranSc[i-1]);
+            FPV[i] = ForwardTransform(FPV[i-1].Fwd_Superposition, FPV[i], image_transformations[i - 1].clone(), g[i-1],TranSc[i-1]);
 			//cout << TranSc[i - 1];
             // Perform all of the backward path transformations
-            BPV[layers-1-i] = BackwardTransform(BPV[layers-i], MapBack[layers - 1 - i], g[layers-1-i]);
+            BPV[layers-1-i] = BackwardTransform(BPV[layers-i], image_transformations[layers - i - 1].clone(), g[layers-1-i]);
         }
         
         //printf("Update competition function\n");
@@ -298,7 +298,7 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
 }
 
 
-Fwd_Path_Values ForwardTransform(Mat In, Fwd_Path_Values & InFP, Mat transMap, Mat g, Mat &Transc){
+Fwd_Path_Values ForwardTransform(Mat In, Fwd_Path_Values & InFP, Mat Perspective_Transformation_Matrix, Mat g, Mat &Transc){
     Fwd_Path_Values FPV_return;
     Mat SuperPosition;
     Mat TransformedTemplates;
@@ -331,31 +331,41 @@ Fwd_Path_Values ForwardTransform(Mat In, Fwd_Path_Values & InFP, Mat transMap, M
 
 		//cout << transMap << endl;
 		uint32_t t_temp = clock();
-		float* ptdst = (float*)dst.data;
-		float* ptIn = (float*)In.data;
-		int* ptidx = transMap.ptr<int>(i);
-		
-		int maxit = In.rows*In.cols;
-		int nonzeroIn = 0;
-		int nonzeroOut = 0;
-//#pragma omp parallel for
-		for (int n = 0; n < maxit; n++) {
-			if (ptidx[n] == -1)
-				ptdst[n] = 0;
-			else {
-				float val = ptIn[ptidx[n]];
-				ptdst[n] = val;
-				if (val!=0)	
-					nonzeroOut++;
-			}
-			if (ptIn[n] != 0)
-				nonzeroIn++;
+		Mat Perspective_Transformation_Matrix_2D = Perspective_Transformation_Matrix.row(i).reshape(0, 2);
+
+		sine = -Perspective_Transformation_Matrix_2D.at<float>(0, 1);
+		cosine = Perspective_Transformation_Matrix_2D.at<float>(0, 0);
+
+		angle = roundf(atan(sine / cosine) * 180 / PI);
+
+		matrix_determinant = (sqrt(Perspective_Transformation_Matrix_2D.at<float>(0, 0)*Perspective_Transformation_Matrix_2D.at<float>(1, 1)- Perspective_Transformation_Matrix_2D.at<float>(0, 1)*Perspective_Transformation_Matrix_2D.at<float>(1, 0)));
+		//Transc.push_back(matrix_determinant);
+		matrix_determinant = 1 / matrix_determinant;
+		//cout<<"Perspective Matrix Forward: "<<Perspective_Transformation_Matrix_2D<<endl;
+		//cout<<"Matrix D Forward   "<<matrix_determinant<<endl;
+		//if (0) {
+		if (abs(angle) >= 0.0001 || abs(matrix_determinant - 1) >= 0.0001) {
+			//cout<<"Perspective Matrix Forward: "<<Perspective_Transformation_Matrix_2D<<endl;
+			Point2f src_center(In.cols / 2.0F, In.rows / 2.0F);
+			rotation_matrix = getRotationMatrix2D(src_center, angle, matrix_determinant);
+			//vconcat(rotation_matrix, C, rotation_matrix);
+			warpAffine(In, dst, rotation_matrix, dst.size(), INTER_NEAREST);
+
+			Transc.at<float>(0, i) =(sqrt(double(countNonZero(In)) / double(countNonZero(dst))));
+
+			//imshow("In", In);
+			//imshow("dst", dst);
+			//cvWaitKey();
+		}
+		else {
+			warpAffine(In, dst, Perspective_Transformation_Matrix_2D, dst.size(), INTER_NEAREST);
+			Transc.at<float>(0, i) =(1.0);
 		}
 		t_loop += clock() - t_temp;
 
 
 		//Transc.at<float>(0,i) = (sqrt(float(countNonZero(In)) / float(countNonZero(dst))));
-		Transc.at<float>(0, i) = sqrt(float(nonzeroIn) / nonzeroOut);
+		//Transc.at<float>(0, i) = sqrt(float(nonzeroIn) / nonzeroOut);
 		//Transc.push_back(1.0);
 
 		if (0) {
@@ -396,7 +406,7 @@ Fwd_Path_Values ForwardTransform(Mat In, Fwd_Path_Values & InFP, Mat transMap, M
 }
 
 
-Mat BackwardTransform(Mat In, Mat transMap, Mat g){
+Mat BackwardTransform(Mat In, Mat Perspective_Transformation_Matrix, Mat g){
     Mat BPV_return;
     Mat SuperPosition;
     Mat TransformedTemplates;
@@ -421,18 +431,31 @@ Mat BackwardTransform(Mat In, Mat transMap, Mat g){
 		}
 
 		uint32_t t_temp = clock();
-		float* ptdst = (float*)dst.data;
-		float* ptIn = (float*)In.data;
-		int* ptidx = transMap.ptr<int>(i);
+		Mat Perspective_Transformation_Matrix_2D = Perspective_Transformation_Matrix.row(i).reshape(0, 2);
 
-		int maxit = In.rows*In.cols;
-//#pragma omp parallel for
-		for (int n = 0; n < maxit; n++) {
-			if (ptidx[n] == -1)
-				ptdst[n] = 0;
-			else
-				ptdst[n] = ptIn[ptidx[n]];
+		sine = -Perspective_Transformation_Matrix_2D.at<float>(0, 1);
+		cosine = Perspective_Transformation_Matrix_2D.at<float>(0, 0);
+
+		angle = (-1)*roundf(atan(sine / cosine) * 180 / PI);
+
+		matrix_determinant = (sqrt(Perspective_Transformation_Matrix_2D.at<float>(0, 0)*Perspective_Transformation_Matrix_2D.at<float>(1, 1) - Perspective_Transformation_Matrix_2D.at<float>(0, 1)*Perspective_Transformation_Matrix_2D.at<float>(1, 0)));
+		//cout<<"Perspective matrix backward :"<<Perspective_Transformation_Matrix_2D<<endl;
+		//cout<<"Matrix D Backward   "<<matrix_determinant<<endl;
+
+		//if (0) {
+		if (abs(angle) >= 0.0001 || abs(matrix_determinant - 1) >= 0.0001) {
+			//cout<<"Perspective matrix backward :"<<Perspective_Transformation_Matrix_2D<<endl;
+			Point2f src_center(In.cols / 2.0F, In.rows / 2.0F);
+			rotation_matrix = getRotationMatrix2D(src_center, angle, matrix_determinant);
+			//vconcat(rotation_matrix, C, rotation_matrix);
+			warpAffine(In, dst, rotation_matrix, dst.size(), INTER_NEAREST);
 		}
+		else {
+			Perspective_Transformation_Matrix_2D.at<float>(0, 2) = (-1)*Perspective_Transformation_Matrix_2D.at<float>(0, 2);
+			Perspective_Transformation_Matrix_2D.at<float>(1, 2) = (-1)*Perspective_Transformation_Matrix_2D.at<float>(1, 2);
+			warpAffine(In, dst, Perspective_Transformation_Matrix_2D, dst.size(), INTER_NEAREST);
+		}
+
 		t_loop += clock() - t_temp;
 
 		if (test_back) {

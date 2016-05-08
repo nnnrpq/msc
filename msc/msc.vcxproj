@@ -165,7 +165,7 @@
     <ClCompile Include="Image_PreProcessing.cpp" />
     <ClCompile Include="Learn_Image.cpp" />
     <ClCompile Include="main_framemsc_optmz.cpp" />
-    <ClCompile Include="MSC_Fast_optmz.cpp" />
+    <ClCompile Include="MSC_Fast_optmz_warp.cpp" />
     <ClCompile Include="region_of_interest.cpp" />
     <ClCompile Include="Test_Generate.cpp" />
   </ItemGroup>
