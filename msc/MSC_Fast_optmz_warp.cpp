@@ -56,8 +56,8 @@ double k_memory = 0.25;
 /* debug and display control*/
 int test_forw = 0;
 int test_back = 0;
-int test_comp =0;
-int dispInMid = 0;
+int test_comp =1;
+int dispInMid = 1;
 int dispsc = 0;
 int dispg = 0;
 
@@ -67,6 +67,7 @@ Mat C = (Mat_<double>(1,3) << 0, 0, 1);
 #define FORWARD 1
 #define BACKWARD -1
 Fwd_Path_Values *FPV;
+Mat *BPV;
 
 /* scaling control*/
 /* start scaling normalizer after all the rest layer are clear*/
@@ -130,7 +131,10 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 		FPV[i].Fwd_Superposition = Mat::zeros(Input_Image.rows, Input_Image.cols, CV_32F);
 		FPV[i].Transformed_Templates = Mat::zeros(Size(Input_Image.rows*Input_Image.cols, G[i-1].cols), CV_32F);
 	}
-
+	BPV = new Mat[layer_count];
+	for (int i = 0; i < layer_count; i++) {
+		BPV[i] = Mat::zeros(Input_Image.rows, Input_Image.cols, CV_32F);
+	}
 	int count = 0;
     while(iteration_count > 0){
         iteration_count--;
@@ -226,7 +230,7 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
     
     //Fwd_Path_Values *FPV = new Fwd_Path_Values[layers];
     
-    Mat *BPV = new Mat[layers];
+    //Mat *BPV = new Mat[layers];
 
 	Mat *TranSc = new Mat_<float>[layers];
     
@@ -259,7 +263,7 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
             FPV[i] = ForwardTransform(FPV[i-1].Fwd_Superposition, FPV[i], image_transformations[i - 1].clone(), g[i-1],TranSc[i-1]);
 			//cout << TranSc[i - 1];
             // Perform all of the backward path transformations
-            BPV[layers-1-i] = BackwardTransform(BPV[layers-i], image_transformations[layers - i - 1].clone(), g[layers-1-i]);
+            BackwardTransform(BPV[layers-i], image_transformations[layers - i - 1].clone(), g[layers-1-i], BPV[layers - 1 - i]);
         }
         
         //printf("Update competition function\n");
@@ -289,7 +293,7 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
 	//delete[] FPV;
 
 	for (int i = 0; i < layers; i++) {
-		BPV[i].release();
+		//BPV[i].release();
 		TranSc[i].release();
 	}
 
@@ -406,9 +410,9 @@ Fwd_Path_Values ForwardTransform(Mat In, Fwd_Path_Values & InFP, Mat Perspective
 }
 
 
-Mat BackwardTransform(Mat In, Mat Perspective_Transformation_Matrix, Mat g){
-    Mat BPV_return;
-    Mat SuperPosition;
+void BackwardTransform(Mat In, Mat Perspective_Transformation_Matrix, Mat g, Mat& Ret){
+    //Mat BPV_return;
+	Mat& SuperPosition = Ret;
     Mat TransformedTemplates;
     float sine;
     double Thresh_VAL = 1;
@@ -419,7 +423,7 @@ Mat BackwardTransform(Mat In, Mat Perspective_Transformation_Matrix, Mat g){
     int count = g.cols;
     g.convertTo(g,CV_32F);
 
-    SuperPosition = Mat::zeros(In.rows, In.cols, CV_32FC1);
+    //SuperPosition = Mat::zeros(In.rows, In.cols, CV_32FC1);
     //SuperPosition = g.at<float>(0,0)*In.clone();
 	//SuperPosition.convertTo(SuperPosition, CV_32F);
 
@@ -475,8 +479,8 @@ Mat BackwardTransform(Mat In, Mat Perspective_Transformation_Matrix, Mat g){
     //SuperPosition.convertTo(SuperPosition,CV_32FC1);
     threshold(SuperPosition, SuperPosition, Thresh_VAL, MAX_VAL, THRESH_TRUNC);
     //Mat Superposition_image_changed = foregroundBackgroundImageChange(SuperPosition);
-    BPV_return = SuperPosition.clone();
-    return BPV_return;
+    //BPV_return = SuperPosition.clone();
+    //return BPV_return;
 }
 
 Mat Superimpose_Memory_Images(Mat M, Mat g, int r)

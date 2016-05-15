@@ -187,8 +187,8 @@ int main() {
 
 		// Get the returned address Images.
 		//imshow("Forward Path", Fwd_Image * 255);
-		//imshow("Backward Path", (Edge_Detected_Image +Bwd_Image) * 255);
-		//waitKey(0);
+		imshow("Backward Path", (Edge_Detected_Image +Bwd_Image) * 255);
+		waitKey(0);
 
 		if (abs(xtran - finalTrans.xTranslate) / img_size.width < th && abs(ytran - finalTrans.yTranslate) / img_size.height < th&&
 			abs(scale - finalTrans.scale) < th && abs(theta - finalTrans.theta) / 180 < th) {

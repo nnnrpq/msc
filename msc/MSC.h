@@ -38,9 +38,29 @@ int MapSeekingCircuit(Mat , Mat , Size , Mat *, Mat *, int, vector< Mat > , vect
 int MapSeekingCircuit(Mat, Mat, Size, Mat *, Mat *, int, vector< Mat >, vector< Mat >, vector< Mat > *, double[]);
 
 int Verify_Image(Mat , Mat );
+
 Fwd_Path_Values ForwardTransform(Mat , Mat ,Mat,Mat &  );
+struct FwtArg {
+	Mat *pIn;
+	Fwd_Path_Values * pInFP;
+	Mat *ptrans;
+	Mat *pg;
+	Mat *pTransc;
+	Fwd_Path_Values *ret;
+};
 Fwd_Path_Values ForwardTransform(Mat In, Fwd_Path_Values & InFP, Mat transMap, Mat g, Mat &Transc);
+void *ForwardTransform(void*);
+
 Mat BackwardTransform(Mat , Mat , Mat );
+void BackwardTransform(Mat, Mat, Mat,Mat&);
+struct BktArg {
+	Mat *pIn;
+	Mat	*ptrans;
+	Mat	*pg;
+	Mat *ret;
+};
+void *BackwardTransform(void*);
+
 Mat Superimpose_Memory_Images(Mat , Mat, int );
 Mat UpdateCompetition(Mat, Mat, Mat ,int , double,Mat,double p = 1);
 Mat UpdateCompetition_Memory(Mat, Mat, Mat ,int , double);

@@ -50,10 +50,10 @@
     <ClCompile Include="Test_Generate.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="MSC_Fast_optmz_warp.cpp">
+    <ClCompile Include="main_framemsc_optmz.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="main_framemsc_optmz.cpp">
+    <ClCompile Include="MSC_Fast_optmz_warp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
