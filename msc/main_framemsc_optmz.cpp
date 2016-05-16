@@ -32,9 +32,10 @@ using namespace cv;
 
 Mat src, src_gray;
 Mat dst;
-double mul = 0.9;		/* the rate of updating the test image*/
+double mul = 0.95;		/* the rate of updating the test image*/
 double th = 0.15;		/* threshold for whether a transformation from msc is qualified*/					
 int framectl = 1;		/* frame control*/
+bool dispresult = 0;
 
 struct filename_struct {
 	char filename[200];
@@ -88,8 +89,9 @@ int main() {
 	TransformationSet finalTrans;
 	finalTrans.nonIdenticalCount = -1;
 	int count = 0;
-	int maxiter = 20;
+	int maxiter = 30;
 	UINT t1, t2;
+	Mat Edge_Detected_Image;
 	do {
 		if (count == 1)
 			t1 = clock();
@@ -157,7 +159,7 @@ int main() {
 
 
 		//Resize the input image as well the memory images
-		Mat Edge_Detected_Image(maxRows + 1, maxCols + 1, CV_32FC1);
+		//Mat Edge_Detected_Image(maxRows + 1, maxCols + 1, CV_32FC1);
 		Edge_Detected_Image = padImageMatrix(Edge_Detected_Image_unpadded, maxRows + 1, maxCols + 1);
 		//imshow("random image", Edge_Detected_Image*255);
 
@@ -180,15 +182,18 @@ int main() {
 
 		/* check the result of msc and update image*/
 		flag = finalTrans.nonIdenticalCount != 0;
-		//printf("the target xtran is %f, msc result is %f\n", xtran, finalTrans.xTranslate);
-		//printf("the target ytran is %f, msc result is %f\n", ytran, finalTrans.yTranslate);
-		//printf("the target theta is %f, msc result is %f\n", theta, finalTrans.theta);
-		//printf("the target scale is %f, msc result is %f\n", scale, finalTrans.scale);
+		printf("the target xtran is %f, msc result is %f\n", xtran, finalTrans.xTranslate);
+		printf("the target ytran is %f, msc result is %f\n", ytran, finalTrans.yTranslate);
+		printf("the target theta is %f, msc result is %f\n", theta, finalTrans.theta);
+		printf("the target scale is %f, msc result is %f\n", scale, finalTrans.scale);
 
 		// Get the returned address Images.
 		//imshow("Forward Path", Fwd_Image * 255);
-		imshow("Backward Path", (Edge_Detected_Image +Bwd_Image) * 255);
-		waitKey(0);
+		if (dispresult) {
+			imshow("Backward Path", (Edge_Detected_Image + Bwd_Image) * 255);
+			waitKey(0);
+		}
+
 
 		if (abs(xtran - finalTrans.xTranslate) / img_size.width < th && abs(ytran - finalTrans.yTranslate) / img_size.height < th&&
 			abs(scale - finalTrans.scale) < th && abs(theta - finalTrans.theta) / 180 < th) {
@@ -210,10 +215,13 @@ int main() {
 	t2 = clock();
 
 //	_CrtDumpMemoryLeaks();
-
 	printf("MSC is done\n");
 	printf("time for %d iterations is %d\n", count, t2 - t1);
+
 	getchar();
+
+	imshow("Backward Path", (Edge_Detected_Image + Bwd_Image) * 255);
+	waitKey(0);
 	return 0;
 
 }

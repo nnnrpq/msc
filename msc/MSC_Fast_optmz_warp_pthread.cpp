@@ -50,10 +50,10 @@ double maxscale_para = 1;	/*maximum scaling factor*/
 double minscale_para = 0.5;	/*minimum scaling factor*/
 
 /* k-step value*/
-double k_xTranslate = 0.5;
-double k_yTranslate = 0.5;
+double k_xTranslate = 0.8;
+double k_yTranslate = 0.8;
 double k_rotate = 0.4;
-double k_scale = 0.35;
+double k_scale = 0.4;
 double k_memory = 0.25;
 
 /* debug and display control*/
@@ -273,7 +273,8 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
 			fwrd.ret = &FPV[i];
 			pthread_t tid1;
 			void *status1;
-			pthread_create(&tid1, NULL, ForwardTransform, &fwrd);
+			//pthread_create(&tid1, NULL, ForwardTransform, &fwrd);
+			ForwardTransform(&fwrd);
 
 			BktArg bckwrd;
 			bckwrd.pg = &g[layers - 1 - i];
@@ -282,10 +283,11 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
 			bckwrd.ret = &BPV[layers - 1 - i];
 			pthread_t tid2;
 			void *status2;
-			pthread_create(&tid2, NULL, BackwardTransform, &bckwrd);
+			//pthread_create(&tid2, NULL, BackwardTransform, &bckwrd);
+			BackwardTransform(&bckwrd);
 
-			pthread_join(tid1, &status1);
-			pthread_join(tid2, &status2);
+			//pthread_join(tid1, &status1);
+			//pthread_join(tid2, &status2);
             //FPV[i] = ForwardTransform(FPV[i-1].Fwd_Superposition, FPV[i], image_transformations[i - 1].clone(), g[i-1],TranSc[i-1]);
 			//cout << TranSc[i - 1];
             // Perform all of the backward path transformations
@@ -450,6 +452,7 @@ void *BackwardTransform(void* pArgin) {
 	Mat* BPV_return = argin->ret;
 
 	Mat& SuperPosition = *argin->ret;
+	SuperPosition.setTo(0);
 	Mat TransformedTemplates;
 	float sine;
 	double Thresh_VAL = 1;
@@ -578,7 +581,8 @@ Mat UpdateCompetition(Mat Transformed_Templates, Mat BackwardTransform, Mat g, i
 		//cout << TranSc << endl;
         if(BackwardTransform_L2 !=0 && T_L2 != 0){
 			if (startscale)
-				q.at<float>(0,i) = T.dot(BackwardTransform)*((TranSc.at<float>(0,i)));
+				/*q.at<float>(0,i) = T.dot(BackwardTransform)*(pow(TranSc.at<float>(0,i),0.8));*/
+				q.at<float>(0, i) = T.dot(BackwardTransform)*(TranSc.at<float>(0, i));
 			//q.at<double>(0, i) = T.dot(BackwardTransform) / T_L2;
 			else
 				q.at<float>(0, i) = T.dot(BackwardTransform);
@@ -587,7 +591,7 @@ Mat UpdateCompetition(Mat Transformed_Templates, Mat BackwardTransform, Mat g, i
         }
 		if (startscale)
 			if (TranSc.at<float>(0,i) < 1)
-				p = 1.5;
+				p = 1;
 
     }
 

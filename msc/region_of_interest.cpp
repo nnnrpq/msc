@@ -32,7 +32,7 @@ Mat ROI_image(Mat src)
     
     // Set Region of Interest to the area defined by the box
     cv::Rect roi;
-    cout<<box.center.x<<"   "<<box.size.width<<"   "<<box.center.y<<"   "<<box.size.height<<endl;
+    //cout<<box.center.x<<"   "<<box.size.width<<"   "<<box.center.y<<"   "<<box.size.height<<endl;
     roi.x = box.center.x - (box.size.width / 2);
     roi.y = box.center.y - (box.size.height / 2);
     roi.width = box.size.width;
@@ -45,7 +45,7 @@ Mat ROI_image(Mat src)
         roi.width=src.cols/2;
     if(roi.height >= src.rows)
         roi.height=src.rows/2;
-    cout<<roi.x<<"   "<<roi.width<<"   "<<roi.y<<"   "<<roi.height<<endl;
+    //cout<<roi.x<<"   "<<roi.width<<"   "<<roi.y<<"   "<<roi.height<<endl;
     
     // Crop the original image to the defined ROI
     cv::Mat crop = src(roi);

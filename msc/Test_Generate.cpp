@@ -35,13 +35,13 @@ Mat Rand_Transform(Mat src, double & theta, double & xtranslate, double & ytrans
 		ytranslate = double(rand() % acc) / acc * src.rows*0.8 - round(0.4*src.rows);		/*ytranslate -0.5rows:rows/acc:0.5rows */
 		scale = double(rand() % acc) / acc*(maxscale - minscale) + minscale;
 
-		scale = 0.616;
-		theta = -55;
-		ytranslate = 113;
-		xtranslate = -111;
+		//scale = 0.616;
+		//theta = -55;
+		//ytranslate = 113;
+		//xtranslate = -111;
 	}
 	else if (flag == 2) {	/* add small noise*/
-		theta += double(rand() % acc -acc/2) / acc * 2 * 90 *0.15;		
+		theta += double(rand() % acc -acc/2) / acc * 2 * 90 *0.1;		
 		xtranslate += double(rand() % acc - acc/2) / acc * src.cols*0.8 *0.15;
 		ytranslate += double(rand() % acc - acc / 2) / acc * src.rows*0.8*0.15;
 		scale += double(rand() % acc - acc / 2) / acc*(maxscale - minscale)*0.15;

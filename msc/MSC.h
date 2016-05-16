@@ -47,6 +47,7 @@ struct FwtArg {
 	Mat *pg;
 	Mat *pTransc;
 	Fwd_Path_Values *ret;
+	int nlayer;
 };
 Fwd_Path_Values ForwardTransform(Mat In, Fwd_Path_Values & InFP, Mat transMap, Mat g, Mat &Transc);
 void *ForwardTransform(void*);
@@ -58,11 +59,21 @@ struct BktArg {
 	Mat	*ptrans;
 	Mat	*pg;
 	Mat *ret;
+	int nlayer;
 };
 void *BackwardTransform(void*);
 
 Mat Superimpose_Memory_Images(Mat , Mat, int );
+
 Mat UpdateCompetition(Mat, Mat, Mat ,int , double,Mat,double p = 1);
+struct UpdArg {
+	Mat *pg;
+	int nlayer;
+	Mat *pTranSc;
+	TransformationSet *pfinalTrans;
+};
+void *UpdateCompetition(void*);
+
 Mat UpdateCompetition_Memory(Mat, Mat, Mat ,int , double);
 
 Mat UpdateCompetition_Background(Mat, Mat, Mat, Mat, Mat ,int );
