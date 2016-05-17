@@ -72,9 +72,10 @@ struct UpdArg {
 	Mat *pTranSc;
 	TransformationSet *pfinalTrans;
 };
-void *UpdateCompetition(void*);
 
-Mat UpdateCompetition_Memory(Mat, Mat, Mat ,int , double);
+void * UpdateCompetition(void* pArgin);
+
+//Mat UpdateCompetition_Memory(Mat, Mat, Mat ,int , double);
 
 Mat UpdateCompetition_Background(Mat, Mat, Mat, Mat, Mat ,int );
 Mat UpdateCompetition_Memory_Background(Mat, Mat, Mat, Mat, Mat ,int );

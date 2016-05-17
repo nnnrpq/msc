@@ -74,7 +74,8 @@ Mat C = (Mat_<double>(1,3) << 0, 0, 1);
 Fwd_Path_Values *FPV;
 Mat *BPV;
 sem_t* sem_gout;
-sem_t* sem_gin;
+sem_t* sem_gin_fwd;
+sem_t* sem_gin_bwd;
 sem_t* sem_fwd;
 sem_t* sem_bwd;
 pthread_mutex_t* mutex_g;
@@ -153,7 +154,8 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size input_size, Mat *Fwd_Path, M
 
 	int status;
 	sem_gout = new sem_t[layer_count - 1];
-	sem_gin = new sem_t[layer_count - 1];
+	sem_gin_fwd = new sem_t[layer_count - 1];
+	sem_gin_bwd = new sem_t[layer_count - 1];
 	sem_fwd = new sem_t[layer_count - 1];
 	sem_bwd = new sem_t[layer_count - 1];
 	mutex_g = new pthread_mutex_t[layer_count - 1];
@@ -161,9 +163,10 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size input_size, Mat *Fwd_Path, M
 	for (int i = 1; i < layer_count; i++) {
 		status = sem_init(&sem_gout[i-1], 0, 2);
 		if (status != 0) { perror("sem_init failed"); exit(status); }
-		status = sem_init(&sem_gin[i - 1], 0, 0);
+		status = sem_init(&sem_gin_fwd[i - 1], 0, 0);
+		status = sem_init(&sem_gin_bwd[i - 1], 0, 0);
 		if (status != 0) { perror("sem_init failed"); exit(status); }
-		status = sem_init(&sem_fwd[i-1], 0, i==1?1:0);
+		status = sem_init(&sem_fwd[i-1], 0, 0);
 		if (status != 0) { perror("sem_init failed"); exit(status); }
 		status = sem_init(&sem_bwd[layer_count-1-i], 0, i == 1 ? 1 : 0);
 		if (status != 0) { perror("sem_init failed"); exit(status); }
@@ -180,6 +183,8 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size input_size, Mat *Fwd_Path, M
 	BktArg *bckwrd = new BktArg[layers - 1];
 	UpdArg *update = new UpdArg[layers - 1];
 	Mat *TranSc = new Mat_<float>[layers];
+	threshold(Memory_Images, BPV[layers - 1], 1, MAX_VAL, THRESH_TRUNC);
+	BPV[layers - 1].convertTo(BPV[layers - 1], CV_32FC1);
 	for (int i = 1; i < layers; i++) {
 		// Perform all of the forward path transformations
 		TranSc[i - 1] = Mat(Size(G[i - 1].cols, 1), CV_32F);
@@ -226,7 +231,8 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size input_size, Mat *Fwd_Path, M
 	for (int i = 1; i < layer_count; i++) {
 		status = sem_destroy(&sem_gout[i - 1]);
 		if (status != 0) { perror("sem_destroy failed"); exit(status); }
-		status = sem_destroy(&sem_gin[i - 1]);
+		status = sem_destroy(&sem_gin_fwd[i - 1]);
+		status = sem_destroy(&sem_gin_bwd[i - 1]);
 		if (status != 0) { perror("sem_destroy failed"); exit(status); }
 		status = sem_destroy(&sem_fwd[i - 1]);
 		if (status != 0) { perror("sem_destroy failed"); exit(status); }
@@ -371,9 +377,9 @@ void *ForwardTransform(void* pargin) {
 	Fwd_Path_Values* InFP = argin->pInFP;
 	Mat Perspective_Transformation_Matrix = (*argin->ptrans).clone();
 	Mat g = (*argin->pg).clone();
-	Mat Transc = *argin->pTransc;
+	Mat& Transc = *argin->pTransc;
 	int nlayer = argin->nlayer;
-	Fwd_Path_Values* FPV_return = argin->ret;
+	Fwd_Path_Values& FPV_return = *argin->ret;
 	Mat SuperPosition;
 	Mat TransformedTemplates;
 	double Thresh_VAL = 100;
@@ -390,6 +396,7 @@ void *ForwardTransform(void* pargin) {
 	int status;
 
 	while (mscFlag) {
+
 		status = sem_wait(&sem_gout[nlayer]);
 		if (status != 0) {
 			perror("sem wait failed"); exit(status);
@@ -400,7 +407,7 @@ void *ForwardTransform(void* pargin) {
 				perror("sem wait failed"); exit(status);
 			}
 		}
-
+		printf("start forward %d\n", nlayer);
 
 		//dst = In.clone();
 		SuperPosition = (InFP->Fwd_Superposition).setTo(0);
@@ -466,12 +473,14 @@ void *ForwardTransform(void* pargin) {
 
 			dst.release();
 		}
-		FPV_return->Transformed_Templates = retTemp;
+		FPV_return.Transformed_Templates = retTemp;
 		threshold(SuperPosition, SuperPosition, Thresh_VAL, MAX_VAL, THRESH_TRUNC);
-		FPV_return->Fwd_Superposition = SuperPosition.clone();
-		
-		if (nlayer!=layer_count-2)	sem_post(&sem_fwd[nlayer+1]);
-		sem_post(&sem_gin[nlayer]);
+		FPV_return.Fwd_Superposition = SuperPosition.clone();
+
+		printf("end forward %d\n", nlayer);
+
+		sem_post(&sem_fwd[nlayer]);
+		sem_post(&sem_gin_fwd[nlayer]);
 	}
 	return 0;
 }
@@ -480,7 +489,7 @@ void *BackwardTransform(void* pArgin) {
 	BktArg* argin = (BktArg*)pArgin;
 	Mat In = *argin->pIn;
 	Mat Perspective_Transformation_Matrix = (*argin->ptrans).clone();
-	Mat g = (*argin->pg).clone();
+	Mat g = *argin->pg;
 	Mat* BPV_return = argin->ret;
 	Mat& SuperPosition = *argin->ret;
 	int nlayer = argin->nlayer;
@@ -508,6 +517,7 @@ void *BackwardTransform(void* pArgin) {
 				perror("sem wait failed"); exit(status);
 			}
 		}
+		printf("start backward %d\n", nlayer);
 
 		SuperPosition.setTo(0);
 
@@ -554,8 +564,9 @@ void *BackwardTransform(void* pArgin) {
 		}
 		threshold(SuperPosition, SuperPosition, Thresh_VAL, MAX_VAL, THRESH_TRUNC);
 
-		if (nlayer!=0)	sem_post(&sem_bwd[nlayer-1]);
-		sem_post(&sem_gin[nlayer]);
+		printf("end backward %d\n", nlayer);
+		if (nlayer!=0)	sem_post(&sem_bwd[nlayer]);
+		sem_post(&sem_gin_bwd[nlayer]);
 	}
 
 	
@@ -592,15 +603,20 @@ void * UpdateCompetition(void* pArgin) {
 
 	int status;
 	while (mscFlag) {
-		status = sem_wait(&sem_gin[nlayer-1]);
+		status = sem_wait(&sem_gin_fwd[nlayer-1]);
 		if (status != 0) {
 			perror("sem wait failed"); exit(status);
 		}
-		status = sem_wait(&sem_gin[nlayer-1]);
 
-		if (status != 0) {
-			perror("sem wait failed"); exit(status);
+		if (nlayer != layer_count - 1) {
+			status = sem_wait(&sem_gin_bwd[nlayer]);
+			if (status != 0) {
+				perror("sem wait failed"); exit(status);
+			}
 		}
+		printf("start update %d\n", nlayer);
+
+		//cout << "g: " << g << endl;
 		for (int i = 0; i<count; i++) {
 			if (g.at<float>(0, i) == 0) {
 				q.at<float>(0, i) = 0;
@@ -643,21 +659,21 @@ void * UpdateCompetition(void* pArgin) {
 		// cout<<"q_min:"<<min<<"  q_max: "<<max<<endl;
 		Mat temp;
 		pow(1 - q / max, p, temp);
+		//cout << "temp:" << temp << endl;
+		g = g - k*temp;
 		subtract(g, k*(temp), g);
-		//cout << "g:" << g << "  subtracted_g: " << subtracted_g << endl;
+		
 		g.convertTo(g, CV_32F);
 		threshold(g, g, Thresh_VAL, MAX_VAL, THRESH_TOZERO);
 
-		sem_post(&sem_gout[nlayer-1]);
-		sem_post(&sem_gout[nlayer-1]);
-
+		int nz = countNonZero(g);
 		if (nlayer == layer_count - 2) {
 			iteration_count--;
 			if (iteration_count % 5 == 0) {
 				///* only inspect before the scaling layer*/
 
 				for (int kk = 0; kk < G.size(); kk++) {
-					//cout << "-------\n" << G[kk] << "-------\n";
+					cout << "-------\n" << G[kk] << "-------\n";
 					if (countNonZero(G[kk]) != 1) {
 						mscFlag = 1;
 						break;
@@ -669,6 +685,7 @@ void * UpdateCompetition(void* pArgin) {
 						//cout << current << endl << G[kk] << endl;
 						findNonZero(current, idx);
 						idxTrans[kk] = (idx[0]).x;
+						mscFlag = 0;
 					}
 				}
 
@@ -688,11 +705,19 @@ void * UpdateCompetition(void* pArgin) {
 					//double ang = 0;
 					//double sc = 1;
 					finalTrans = TransformationSet(xT, yT, ang, sc);
-					break;
+
+					sem_post(&sem_gout[nlayer - 1]);
+					sem_post(&sem_gout[nlayer - 1]);
+
+					return 0;
 				}
 			}
 		}
-		
+		printf("end update %d\n", nlayer);
+		cout << "g: " << g << endl;
+		sem_post(&sem_gout[nlayer - 1]);
+		sem_post(&sem_gout[nlayer - 1]);
+
 	}
 	return 0;
 
