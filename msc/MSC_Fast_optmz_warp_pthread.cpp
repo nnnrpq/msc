@@ -47,7 +47,7 @@ vector<double> yT_val;
 vector<double> rot_val;
 vector<double> sc_val;
 double maxscale_para = 1;	/*maximum scaling factor*/
-double minscale_para = 0.5;	/*minimum scaling factor*/
+double minscale_para = 0.3;	/*minimum scaling factor*/
 
 /* k-step value*/
 double k_xTranslate = 0.8;
@@ -84,6 +84,9 @@ void getTransform(Size img_size, vector < Mat > &transformation_set, vector< Mat
 void getTransMap(Size img_size, int flag, vector<Mat> &ResultMap);
 
 int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat *Bwd_Path, TransformationSet & finalTrans){
+	//imshow("get img", Memory_Images);
+	//waitKey();
+
 	t_total = clock();
 	t_loop = 0;
 

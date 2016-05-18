@@ -1,11 +1,11 @@
 var client = require('ar-drone').createClient();
-const myaddon = require('../build/Release/MSC_drone');
+const myaddon = require('../build/Release/addon');
 var addon = myaddon();
 var fs = require('fs');
 
 
 var pngStream = client.getPngStream();
-
+client.config('video:video_channel', 0);
 
 var lastPng;
 pngStream
@@ -22,7 +22,7 @@ pngStream
 //.once('data', lastPng);
 
 var timerId;
-const interval = 500;
+const interval = 100;
 setTimeout(function () { } , 1000);
 
 process.on('SIGINT', function () {
@@ -40,46 +40,42 @@ process.on('SIGINT', function () {
 
 client
     .takeoff();
-	
-client.config('video:video_channel', 3);
 
 client
-	.after(1000,function(){
-		client.up(1);
-		console.log("up");
-	});
-client
-    .after(2000,function() {
-		
+    .after(1000,function() {
     if (1) {
-        timerId = setInterval(function (lastPng) {
-            console.log("once");
+        //timerId = setInterval(function (lastPng) {
+            
             pngStream
-        .once('data', function (pngBuffer) {
+        .on('data', function (pngBuffer) {
 				console.time("C time");
                 lastPng = pngBuffer;
                 //console.log("It is a buffer:" + Buffer.isBuffer(lastPng));
                 //console.log(addon.myctrl(lastPng));
                 var ctrlData = addon(lastPng);
                 //console.log(ctrlData);
-                if (ctrlData.roll > 0) {
-                    client.right(ctrlData.roll);
+                if (ctrlData.spin > 0) {
+                    client.clockwise(ctrlData.spin);
                 }
-                else if (ctrlData.roll < 0) {
-                    client.left(-ctrlData.roll);
+                else if (ctrlData.spin < 0) {
+                    client.counterClockwise(-ctrlData.spin);
                 }
-				if (ctrlData.pitch > 0) {
-                    client.back(ctrlData.pitch);
-                }
-                else if (ctrlData.pitch < 0) {
-                    client.front(-ctrlData.pitch);
-                }
-                if (~ctrlData.roll&&~ctrlData.pitch) {
+                else {
                     client.stop();
                 }
 				console.timeEnd("C time");
+            //process.on('SIGINT', function () {
+            //    console.log('Got SIGINT. Landing, press Control-C again to force exit.');
+            //    setTimeout(function () {
+            //        console.log("Landing drone.");
+            //        client.land(function () {
+            //            process.exit(0);
+            //        });
+            //        clearInterval(timerId);
+            //    }, 1000);
+            //});
             })
-        }, interval);
+        //}, interval);
     };
 });
 

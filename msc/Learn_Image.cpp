@@ -6,7 +6,11 @@
 //
 //	Modified by Zhangyuan Wang
 //	Feb 21, add feature detector, matching and computing
-
+#ifdef WIN32
+#pragma warning( push ) 
+#pragma warning( disable: 4530 )
+namespace std { typedef type_info type_info; }
+#endif
 #include <stdio.h>
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
