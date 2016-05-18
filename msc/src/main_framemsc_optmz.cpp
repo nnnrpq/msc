@@ -81,7 +81,7 @@ int main() {
 	double theta, xtran, ytran, scale;
 	//imshow("template", test);
 	Mat src = Rand_Transform(test, theta, xtran, ytran, scale,1);		/*src is the test image*/
-	src = imread("b1.png", CV_LOAD_IMAGE_GRAYSCALE);
+	//src = imread("b1.png", CV_LOAD_IMAGE_GRAYSCALE);
 
 	//src.convertTo(src, CV_32FC1, 1.0 / 255);
 
