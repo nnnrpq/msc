@@ -155,20 +155,20 @@
     <None Include="ClassDiagram.cd" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="dirent.h" />
-    <ClInclude Include="Generate_Image.h" />
-    <ClInclude Include="Image_PreProcessing.h" />
-    <ClInclude Include="Learn_Image.h" />
-    <ClInclude Include="MSC.h" />
-    <ClInclude Include="region_of_interest.h" />
+    <ClCompile Include="src\Image_PreProcessing.cpp" />
+    <ClCompile Include="src\Learn_Image.cpp" />
+    <ClCompile Include="src\main_framemsc_optmz_trim.cpp" />
+    <ClCompile Include="src\MSC_Fast_optmz_warp_pthread.cpp" />
+    <ClCompile Include="src\region_of_interest.cpp" />
+    <ClCompile Include="src\Test_Generate.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Image_PreProcessing.cpp" />
-    <ClCompile Include="Learn_Image.cpp" />
-    <ClCompile Include="main_framemsc_optmz_trim.cpp" />
-    <ClCompile Include="MSC_Fast_optmz_warp_pthread.cpp" />
-    <ClCompile Include="region_of_interest.cpp" />
-    <ClCompile Include="Test_Generate.cpp" />
+    <ClInclude Include="src\dirent.h" />
+    <ClInclude Include="src\Generate_Image.h" />
+    <ClInclude Include="src\Image_PreProcessing.h" />
+    <ClInclude Include="src\Learn_Image.h" />
+    <ClInclude Include="src\MSC.h" />
+    <ClInclude Include="src\region_of_interest.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

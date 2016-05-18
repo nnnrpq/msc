@@ -51,39 +51,39 @@
     <ClCompile Include="jsmsc.cc">
       <Filter>..</Filter>
     </ClCompile>
-    <ClCompile Include="..\Image_PreProcessing.cpp">
+    <ClCompile Include="..\src\Learn_Image.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\Learn_Image.cpp">
+    <ClCompile Include="..\src\MSC_Fast_optmz_warp_pthread.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\MSC_Fast_optmz_warp_pthread.cpp">
+    <ClCompile Include="..\src\region_of_interest.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\region_of_interest.cpp">
+    <ClCompile Include="..\src\Test_Generate.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\Test_Generate.cpp">
+    <ClCompile Include="..\src\Image_PreProcessing.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Generate_Image.h">
+    <ClInclude Include="..\src\Image_PreProcessing.h">
       <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="..\Image_PreProcessing.h">
+    <ClInclude Include="..\src\Learn_Image.h">
       <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="..\Learn_Image.h">
+    <ClInclude Include="..\src\MSC.h">
       <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="..\MSC.h">
+    <ClInclude Include="..\src\region_of_interest.h">
       <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="..\region_of_interest.h">
+    <ClInclude Include="..\src\dirent.h">
       <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="..\dirent.h">
+    <ClInclude Include="..\src\Generate_Image.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

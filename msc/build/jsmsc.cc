@@ -17,10 +17,10 @@ namespace std { typedef type_info type_info; }
 #include <ArrayBuffer.h>
 #include <nan.h>
 
-#include "../Image_PreProcessing.h"
-#include "../Generate_Image.h"
-#include "../Learn_Image.h"
-#include "../MSC.h"
+#include "../src/Image_PreProcessing.h"
+#include "../src/Generate_Image.h"
+#include "../src/Learn_Image.h"
+#include "../src/MSC.h"
 
 using namespace std;
 using namespace v8;

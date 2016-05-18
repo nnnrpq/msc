@@ -18,43 +18,43 @@
     <None Include="ClassDiagram.cd" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="dirent.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Image_PreProcessing.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Learn_Image.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="MSC.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="region_of_interest.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Generate_Image.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
+    <ClCompile Include="src\MSC_Fast_optmz_warp_pthread.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\region_of_interest.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Test_Generate.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Image_PreProcessing.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Learn_Image.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main_framemsc_optmz_trim.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Image_PreProcessing.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Learn_Image.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="region_of_interest.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Test_Generate.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="MSC_Fast_optmz_warp_pthread.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="main_framemsc_optmz_trim.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
+    <ClInclude Include="src\Image_PreProcessing.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Learn_Image.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MSC.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\region_of_interest.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dirent.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Generate_Image.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

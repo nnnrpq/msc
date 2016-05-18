@@ -22,7 +22,7 @@ pngStream
 //.once('data', lastPng);
 
 var timerId;
-const interval = 500;
+const interval = 800;
 setTimeout(function () { } , 1000);
 
 process.on('SIGINT', function () {
@@ -63,10 +63,10 @@ client
                 var ctrlData = addon(lastPng);
                 //console.log(ctrlData);
                 if (ctrlData.roll > 0) {
-                    client.right(ctrlData.roll);
+                    client.left(ctrlData.roll);
                 }
                 else if (ctrlData.roll < 0) {
-                    client.left(-ctrlData.roll);
+                    client.right(-ctrlData.roll);
                 }
 				if (ctrlData.pitch > 0) {
                     client.back(ctrlData.pitch);

@@ -156,7 +156,8 @@ int main() {
 		// Get the returned address Images.
 		//imshow("Forward Path", Fwd_Image * 255);
 		if (dispresult) {
-			imshow("Backward Path", (Edge_Detected_Image_unpadded + Bwd_Image) * 255);
+			imwrite("result.png", 255*(Edge_Detected_Image_unpadded + Bwd_Image));
+			imshow("Backward Path", (Edge_Detected_Image_unpadded + Bwd_Image));
 			waitKey(0);
 		}
 

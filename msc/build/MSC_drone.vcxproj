@@ -90,7 +90,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\Wang\.node-gyp\4.4.2\include\node;C:\Users\Wang\.node-gyp\4.4.2\src;C:\Users\Wang\.node-gyp\4.4.2\deps\uv\include;C:\Users\Wang\.node-gyp\4.4.2\deps\v8\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./src;C:\Users\Wang\.node-gyp\4.4.2\include\node;C:\Users\Wang\.node-gyp\4.4.2\src;C:\Users\Wang\.node-gyp\4.4.2\deps\uv\include;C:\Users\Wang\.node-gyp\4.4.2\deps\v8\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <CompileAsWinRT>false</CompileAsWinRT>
@@ -144,21 +144,21 @@
     <None Include="..\binding.gyp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\Image_PreProcessing.cpp" />
-    <ClCompile Include="..\Learn_Image.cpp" />
-    <ClCompile Include="..\MSC_Fast_optmz_warp_pthread.cpp" />
-    <ClCompile Include="..\region_of_interest.cpp" />
-    <ClCompile Include="..\Test_Generate.cpp" />
+    <ClCompile Include="..\src\Image_PreProcessing.cpp" />
+    <ClCompile Include="..\src\Learn_Image.cpp" />
+    <ClCompile Include="..\src\MSC_Fast_optmz_warp_pthread.cpp" />
+    <ClCompile Include="..\src\region_of_interest.cpp" />
+    <ClCompile Include="..\src\Test_Generate.cpp" />
     <ClCompile Include="C:\Users\Wang\AppData\Roaming\npm\node_modules\node-gyp\src\win_delay_load_hook.c" />
     <ClCompile Include="jsmsc.cc" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\dirent.h" />
-    <ClInclude Include="..\Generate_Image.h" />
-    <ClInclude Include="..\Image_PreProcessing.h" />
-    <ClInclude Include="..\Learn_Image.h" />
-    <ClInclude Include="..\MSC.h" />
-    <ClInclude Include="..\region_of_interest.h" />
+    <ClInclude Include="..\src\dirent.h" />
+    <ClInclude Include="..\src\Generate_Image.h" />
+    <ClInclude Include="..\src\Image_PreProcessing.h" />
+    <ClInclude Include="..\src\Learn_Image.h" />
+    <ClInclude Include="..\src\MSC.h" />
+    <ClInclude Include="..\src\region_of_interest.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
