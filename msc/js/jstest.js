@@ -22,7 +22,7 @@ pngStream
 //.once('data', lastPng);
 
 var timerId;
-const interval = 800;
+const interval = 400;
 setTimeout(function () { } , 1000);
 
 process.on('SIGINT', function () {
@@ -36,6 +36,16 @@ process.on('SIGINT', function () {
         process.exit(0);
     }, 1000);
 });
+
+
+var finalTrans = {
+	nc : -1,xt : 0,yt : 0,rot : 0,sc : 0
+};
+/* finalTrans.nc = -1;
+finalTrans.xt = 0;
+finalTrans.yt = 0;
+finalTrans.rot = 0;
+finalTrans.sc = 0; */
 
 
 client
@@ -60,7 +70,7 @@ client
                 lastPng = pngBuffer;
                 //console.log("It is a buffer:" + Buffer.isBuffer(lastPng));
                 //console.log(addon.myctrl(lastPng));
-                var ctrlData = addon(lastPng);
+                var ctrlData = addon(lastPng,finalTrans.xt,finalTrans.yt,finalTrans.rot,finalTrans.sc,finalTrans.nc);
                 //console.log(ctrlData);
                 if (ctrlData.roll > 0) {
                     client.left(ctrlData.roll);
@@ -77,6 +87,11 @@ client
                 if (~ctrlData.roll&&~ctrlData.pitch) {
                     client.stop();
                 }
+				finalTrans.xt=ctrlData.xt;
+				finalTrans.yt = ctrlData.yt;
+				finalTrans.rot = ctrlData.rot;
+				finalTrans.sc = ctrlData.sc;
+				finalTrans.nc = ctrlData.nc;
 				console.timeEnd("C time");
             })
         }, interval);
