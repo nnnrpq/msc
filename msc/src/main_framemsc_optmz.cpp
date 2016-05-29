@@ -139,7 +139,7 @@ int main() {
 		// Store all of the edge detected images in the vector.
 		// Reshape the matrices to just a single row and push these
 		// values to the Memory_Images matrix variable.
-		cropped_memory_images = (mem_img_edge);
+		//cropped_memory_images = (mem_img_edge);
 		// Store the number of rows present in the original image.
 	// Step 2:- Scroll through all of the images and perform the pixel normalization. There are couple of ways to approach this
 	// problem. (Approach 1) Bring the pixels of all the images close to the one that has the maximum value. A while loop will
@@ -154,10 +154,10 @@ int main() {
 		}
 		//Resize the input image as well the memory images
 		//Mat Edge_Detected_Image(maxRows + 1, maxCols + 1, CV_32FC1);
-		Edge_Detected_Image = padImageMatrix(Edge_Detected_Image_unpadded, maxRows + 1, maxCols + 1);
+		//Edge_Detected_Image = padImageMatrix(Edge_Detected_Image_unpadded, maxRows + 1, maxCols + 1);
 		//imshow("random image", Edge_Detected_Image*255);
 
-		Memory_Images = padImageMatrix(cropped_memory_images, maxRows + 1, maxCols + 1);
+		//Memory_Images = padImageMatrix(cropped_memory_images, maxRows + 1, maxCols + 1);
 
 
 
@@ -186,7 +186,7 @@ int main() {
 		// Get the returned address Images.
 		//imshow("Forward Path", Fwd_Image * 255);
 		if (dispresult) {
-			imshow("Backward Path", (Edge_Detected_Image + Bwd_Image) * 255);
+			imshow("Backward Path", (Edge_Detected_Image_unpadded + Bwd_Image) * 255);
 			waitKey(0);
 		}
 
@@ -204,7 +204,7 @@ int main() {
 		ytran = ytran*mul;
 		scale = 1 - (1 - scale)*mul;
 		theta = theta*mul;
-		src = Rand_Transform(test, theta, xtran, ytran, scale, 2);
+		src_gray = Rand_Transform(test, theta, xtran, ytran, scale, 2);
 		//buf = 0;
 		count++;
 	} while (count<maxiter);

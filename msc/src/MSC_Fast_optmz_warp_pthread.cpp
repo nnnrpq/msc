@@ -263,11 +263,11 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
     
     
     //imshow("BPV[layers-1]", BPV[layers-1]*255);
-    if(layers>1){
-        //printf("Apply transformations\n");
-        for(int i = 1; i < layers; i++){
-            // Perform all of the forward path transformations
-			TranSc[i - 1] = Mat(Size(g[i-1].cols, 1), CV_32F);
+	if (layers > 1) {
+		//printf("Apply transformations\n");
+		for (int i = 1; i < layers; i++) {
+			// Perform all of the forward path transformations
+			TranSc[i - 1] = Mat(Size(g[i - 1].cols, 1), CV_32F);
 
 			FwtArg fwrd;
 			fwrd.pg = &g[i - 1];
@@ -280,7 +280,15 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
 			void *status1;
 			//pthread_create(&tid1, NULL, ForwardTransform, &fwrd);
 			ForwardTransform(&fwrd);
+			//pthread_join(tid1, &status1);
+			//pthread_join(tid2, &status2);
+			//FPV[i] = ForwardTransform(FPV[i-1].Fwd_Superposition, FPV[i], image_transformations[i - 1].clone(), g[i-1],TranSc[i-1]);
+			//cout << TranSc[i - 1];
+			// Perform all of the backward path transformations
+			//BPV[layers-1-i] = BackwardTransform(BPV[layers-i], image_transformations[layers - i - 1].clone(), g[layers-1-i]);
+		}
 
+		for (int i = 1; i < layers; i++) {
 			BktArg bckwrd;
 			bckwrd.pg = &g[layers - 1 - i];
 			bckwrd.pIn = &BPV[layers - i];
@@ -291,13 +299,7 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
 			//pthread_create(&tid2, NULL, BackwardTransform, &bckwrd);
 			BackwardTransform(&bckwrd);
 
-			//pthread_join(tid1, &status1);
-			//pthread_join(tid2, &status2);
-            //FPV[i] = ForwardTransform(FPV[i-1].Fwd_Superposition, FPV[i], image_transformations[i - 1].clone(), g[i-1],TranSc[i-1]);
-			//cout << TranSc[i - 1];
-            // Perform all of the backward path transformations
-            //BPV[layers-1-i] = BackwardTransform(BPV[layers-i], image_transformations[layers - i - 1].clone(), g[layers-1-i]);
-        }
+		}
         
         //printf("Update competition function\n");
 //#pragma omp parallel for

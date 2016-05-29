@@ -175,7 +175,7 @@ int main() {
 		ytran = ytran*mul;
 		scale = 1 - (1 - scale)*mul;
 		theta = theta*mul;
-		src = Rand_Transform(test, theta, xtran, ytran, scale, 2);
+		src_gray = Rand_Transform(test, theta, xtran, ytran, scale, 2);
 		//buf = 0;
 		count++;
 	} while (count<maxiter);

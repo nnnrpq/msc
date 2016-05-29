@@ -13,6 +13,9 @@
 #include "Image_PreProcessing.h"
 #include <ctime>
 
+#include <pthread.h>
+#pragma comment(lib,"pthreadVC2.lib")
+
 #define PI 3.14159265
 
 using namespace std;
@@ -44,13 +47,13 @@ vector<double> yT_val;
 vector<double> rot_val;
 vector<double> sc_val;
 double maxscale_para = 1;	/*maximum scaling factor*/
-double minscale_para = 0.5;	/*minimum scaling factor*/
+double minscale_para = 0.3;	/*minimum scaling factor*/
 
 /* k-step value*/
-double k_xTranslate = 0.5;
-double k_yTranslate = 0.5;
+double k_xTranslate = 0.8;
+double k_yTranslate = 0.8;
 double k_rotate = 0.4;
-double k_scale = 0.35;
+double k_scale = 0.4;
 double k_memory = 0.25;
 
 /* debug and display control*/
@@ -67,6 +70,7 @@ Mat C = (Mat_<double>(1,3) << 0, 0, 1);
 #define FORWARD 1
 #define BACKWARD -1
 Fwd_Path_Values *FPV;
+Mat *BPV;
 
 /* scaling control*/
 /* start scaling normalizer after all the rest layer are clear*/
@@ -80,6 +84,9 @@ void getTransform(Size img_size, vector < Mat > &transformation_set, vector< Mat
 void getTransMap(Size img_size, int flag, vector<Mat> &ResultMap);
 
 int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat *Bwd_Path, TransformationSet & finalTrans){
+	//imshow("get img", Memory_Images);
+	//waitKey();
+
 	t_total = clock();
 	t_loop = 0;
 
@@ -106,19 +113,21 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
     k_transformations = new double[layer_count-1];
     
    // k_transformations[layer_count-1] = k_memory;
-
+	if (finalTrans.nonIdenticalCount != -1) {
+		cout << "quick solution" << endl;
+	}
 		getTransform(img_size, transformation_set, G, finalTrans);
 
 	//transformation_set.clear();
 
-	vector<Mat>().swap(transformation_set);
+	//vector<Mat>().swap(transformation_set);
 
 	/* get the mapping for transformation*/
-	vector<Mat> MapForw, MapBack;
-	MapForw.reserve(layer_count - 1);
-	MapBack.reserve(layer_count - 1);
-	getTransMap(img_size, FORWARD, MapForw);
-	getTransMap(img_size, BACKWARD, MapBack);
+	//vector<Mat> MapForw, MapBack;
+	//MapForw.reserve(layer_count - 1);
+	//MapBack.reserve(layer_count - 1);
+	//getTransMap(img_size, FORWARD, MapForw);
+	//getTransMap(img_size, BACKWARD, MapBack);
 
 
 
@@ -130,12 +139,15 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 		FPV[i].Fwd_Superposition = Mat::zeros(Input_Image.rows, Input_Image.cols, CV_32F);
 		FPV[i].Transformed_Templates = Mat::zeros(Size(Input_Image.rows*Input_Image.cols, G[i-1].cols), CV_32F);
 	}
-
+	BPV = new Mat[layer_count];
+	for (int i = 0; i < layer_count; i++) {
+		BPV[i] = Mat::zeros(Input_Image.rows, Input_Image.cols, CV_32F);
+	}
 	int count = 0;
     while(iteration_count > 0){
         iteration_count--;
         //printf("About to call MSC %d\n",count++);
-        ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, MapForw,MapBack, &G, k_transformations);
+        ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, transformation_set, &G, k_transformations);
         
 		bool flag = 1;		/* 1 for stopping the msc*/
         if(iteration_count %5 == 0){
@@ -193,7 +205,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
         }
          */
     }
-	ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, MapForw, MapBack, &G, k_transformations);
+	ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, transformation_set, &G, k_transformations);
 	//printf("The value of verified_ret is %g\n", verified_ret);
 
 	//xT_val.clear();
@@ -207,10 +219,10 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 	vector<double>().swap(sc_val);
 
 	//MapForw.clear();
-	vector<Mat>().swap(MapForw);
+	//vector<Mat>().swap(MapForw);
 	//MapBack.clear();
 	//G.clear();
-	vector<Mat>().swap(MapBack);
+	//vector<Mat>().swap(MapBack);
 	vector<Mat>().swap(G);
 
 	t_total = clock()-t_total;
@@ -220,13 +232,13 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
     
 }
 
-int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat *Bwd_Path, int layers, vector< Mat > MapForw, vector<Mat> MapBack, vector< Mat > *G, double k_transformations[]){
+int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat *Bwd_Path, int layers, vector< Mat > image_transformations, vector< Mat > *G, double k_transformations[]){
     
     vector< Mat > g = *G;
     
     //Fwd_Path_Values *FPV = new Fwd_Path_Values[layers];
     
-    Mat *BPV = new Mat[layers];
+    //Mat *BPV = new Mat[layers];
 
 	Mat *TranSc = new Mat_<float>[layers];
     
@@ -251,16 +263,42 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
     
     
     //imshow("BPV[layers-1]", BPV[layers-1]*255);
-    if(layers>1){
-        //printf("Apply transformations\n");
-        for(int i = 1; i < layers; i++){
-            // Perform all of the forward path transformations
-			TranSc[i - 1] = Mat(Size(g[i-1].cols, 1), CV_32F);
-            FPV[i] = ForwardTransform(FPV[i-1].Fwd_Superposition, FPV[i], MapForw[i-1], g[i-1],TranSc[i-1]);
-			//cout << TranSc[i - 1];
-            // Perform all of the backward path transformations
-            BPV[layers-1-i] = BackwardTransform(BPV[layers-i], MapBack[layers - 1 - i], g[layers-1-i]);
-        }
+	if (layers > 1) {
+
+//#pragma omp parallel sections
+	{
+//#pragma omp section
+		for (int i = 1; i < layers; i++) {
+			// Perform all of the forward path transformations
+			TranSc[i - 1] = Mat(Size(g[i - 1].cols, 1), CV_32F);
+
+			FwtArg fwrd;
+			fwrd.pg = &g[i - 1];
+			fwrd.pIn = &FPV[i - 1].Fwd_Superposition;
+			fwrd.pInFP = &FPV[i];
+			fwrd.pTransc = &TranSc[i - 1];
+			fwrd.ptrans = &(image_transformations[i - 1]);
+			fwrd.ret = &FPV[i];
+			pthread_t tid1;
+			void *status1;
+			//pthread_create(&tid1, NULL, ForwardTransform, &fwrd);
+			ForwardTransform(&fwrd);
+		}
+//#pragma omp section
+		for (int i = 1; i < layers; i++) {
+			BktArg bckwrd;
+			bckwrd.pg = &g[layers - 1 - i];
+			bckwrd.pIn = &BPV[layers - i];
+			bckwrd.ptrans = &(image_transformations[layers - i - 1]);
+			bckwrd.ret = &BPV[layers - 1 - i];
+			pthread_t tid2;
+			void *status2;
+			//pthread_create(&tid2, NULL, BackwardTransform, &bckwrd);
+			BackwardTransform(&bckwrd);
+
+		}
+	}
+		
         
         //printf("Update competition function\n");
 //#pragma omp parallel for
@@ -289,7 +327,7 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
 	//delete[] FPV;
 
 	for (int i = 0; i < layers; i++) {
-		BPV[i].release();
+		//BPV[i].release();
 		TranSc[i].release();
 	}
 
@@ -297,30 +335,37 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
     return 0;
 }
 
+void *ForwardTransform(void* pargin) {
+	FwtArg* argin = (FwtArg*)pargin;
+	Mat In = *argin->pIn;
+	Fwd_Path_Values* InFP = argin->pInFP;
+	Mat Perspective_Transformation_Matrix = (*argin->ptrans).clone();
+	Mat g = *argin->pg;
+	Mat Transc = *argin->pTransc;
 
-Fwd_Path_Values ForwardTransform(Mat In, Fwd_Path_Values & InFP, Mat transMap, Mat g, Mat &Transc){
-    Fwd_Path_Values FPV_return;
-    Mat SuperPosition;
-    Mat TransformedTemplates;
-    double Thresh_VAL = 100;
-    float sine;
-    float cosine;
-    float angle;
-    double matrix_determinant;
-    Mat rotation_matrix;
-    int count = g.cols;
-    g.convertTo(g,CV_32F);
+	Fwd_Path_Values* FPV_return = argin->ret;
+	Mat SuperPosition;
+	Mat TransformedTemplates;
+	double Thresh_VAL = 100;
+	float sine;
+	float cosine;
+	float angle;
+	double matrix_determinant;
+
+	int count = g.cols;
+	g.convertTo(g, CV_32F);
 
 	Mat temp;
 	//Mat retTemp = Mat::zeros(Size(In.rows*In.cols,count),CV_32F);
-	Mat& retTemp = InFP.Transformed_Templates;
+	Mat& retTemp = InFP->Transformed_Templates;
 
-    //dst = In.clone();
-    SuperPosition = InFP.Fwd_Superposition.setTo(0);
+	//dst = In.clone();
+	SuperPosition = (InFP->Fwd_Superposition).setTo(0);
 
-	
-//#pragma omp parallel for schedule(guided) num_threads(1)
-    for(int i=0; i<count; i++){
+
+//#pragma omp parallel for
+	for (int i = 0; i<count; i++) {
+		Mat rotation_matrix;
 		Mat dst(In.rows, In.cols, CV_32F);
 		if (g.at<float>(0, i) == 0) {
 			//Mat temp1 = Mat::zeros(Size((In.rows)*(In.cols),1), CV_32F);
@@ -331,42 +376,53 @@ Fwd_Path_Values ForwardTransform(Mat In, Fwd_Path_Values & InFP, Mat transMap, M
 
 		//cout << transMap << endl;
 		uint32_t t_temp = clock();
-		float* ptdst = (float*)dst.data;
-		float* ptIn = (float*)In.data;
-		int* ptidx = transMap.ptr<int>(i);
-		
-		int maxit = In.rows*In.cols;
-		int nonzeroIn = 0;
-		int nonzeroOut = 0;
-//#pragma omp parallel for schedule(guided)
-		for (int n = 0; n < maxit; n++) {
-			if (ptidx[n] == -1)
-				ptdst[n] = 0;
-			else {
-				float val = ptIn[ptidx[n]];
-				ptdst[n] = val;
-				if (val!=0)	
-					nonzeroOut++;
-			}
-			if (ptIn[n] != 0)
-				nonzeroIn++;
+		Mat Perspective_Transformation_Matrix_2D = Perspective_Transformation_Matrix.row(i).reshape(0, 2);
+
+		sine = -Perspective_Transformation_Matrix_2D.at<float>(0, 1);
+		cosine = Perspective_Transformation_Matrix_2D.at<float>(0, 0);
+
+		angle = roundf(atan(sine / cosine) * 180 / PI);
+
+		matrix_determinant = (sqrt(Perspective_Transformation_Matrix_2D.at<float>(0, 0)*Perspective_Transformation_Matrix_2D.at<float>(1, 1) - Perspective_Transformation_Matrix_2D.at<float>(0, 1)*Perspective_Transformation_Matrix_2D.at<float>(1, 0)));
+		//Transc.push_back(matrix_determinant);
+		matrix_determinant = 1 / matrix_determinant;
+		//cout<<"Perspective Matrix Forward: "<<Perspective_Transformation_Matrix_2D<<endl;
+		//cout<<"Matrix D Forward   "<<matrix_determinant<<endl;
+		//if (0) {
+		if (abs(angle) >= 0.0001 || abs(matrix_determinant - 1) >= 0.0001) {
+			//cout<<"Perspective Matrix Forward: "<<Perspective_Transformation_Matrix_2D<<endl;
+			Point2f src_center(In.cols / 2.0F, In.rows / 2.0F);
+			rotation_matrix = getRotationMatrix2D(src_center, angle, matrix_determinant);
+			//vconcat(rotation_matrix, C, rotation_matrix);
+			warpAffine(In, dst, rotation_matrix, dst.size(), INTER_NEAREST);
+
+			Transc.at<float>(0, i) = (sqrt(double(countNonZero(In)) / double(countNonZero(dst))));
+
+			//imshow("In", In);
+			//imshow("dst", dst);
+			//cvWaitKey();
 		}
+		else {
+			warpAffine(In, dst, Perspective_Transformation_Matrix_2D, dst.size(), INTER_NEAREST);
+			Transc.at<float>(0, i) = (1.0);
+		}
+//#pragma omp critical
 		t_loop += clock() - t_temp;
 
 
 		//Transc.at<float>(0,i) = (sqrt(float(countNonZero(In)) / float(countNonZero(dst))));
-		Transc.at<float>(0, i) = sqrt(float(nonzeroIn) / nonzeroOut);
+		//Transc.at<float>(0, i) = sqrt(float(nonzeroIn) / nonzeroOut);
 		//Transc.push_back(1.0);
 
 		if (0) {
 			dst.convertTo(temp, CV_8U, 255);
 			imshow("temp", temp); waitKey();
 			//cout << temp;
-			temp = CannyThreshold(temp,50, 100);
+			temp = CannyThreshold(temp, 50, 100);
 			imshow("tempafter", temp); waitKey();
 			//cout << temp;
 			//threshold(temp, temp, Thresh_VAL, MAX_VAL, THRESH_BINARY);
-			temp.clone().convertTo(dst, CV_32F, 1.0/255);
+			temp.clone().convertTo(dst, CV_32F, 1.0 / 255);
 		}
 		if (test_forw) {
 			imshow("In1", g.at<float>(0, i)*In * 255);
@@ -374,67 +430,88 @@ Fwd_Path_Values ForwardTransform(Mat In, Fwd_Path_Values & InFP, Mat transMap, M
 			//cout << "g=" << g.at<float>(0, i) << " angle=" << angle << " scale=" << matrix_determinant << "\n" << Perspective_Transformation_Matrix_2D << endl;
 			cvWaitKey();
 		}
-        /*
-        if(g.at<double>(0,i) < 0.3){
-            g.at<double>(0,i) = 0;
-        }
-         */
+		/*
+		if(g.at<double>(0,i) < 0.3){
+		g.at<double>(0,i) = 0;
+		}
+		*/
 		dst.convertTo(dst, CV_32FC1);
-		dst *= g.at<float>(0, i);
-        //Mat dst_scaled = g.at<float>(0,i)*dst;
+		dst*= g.at<float>(0, i);
+
 #pragma omp critical
-        SuperPosition = SuperPosition + dst;
+		SuperPosition = SuperPosition + dst;
 
 		dst.reshape(0, 1).copyTo(retTemp.row(i));
 
 
-        dst.release();
-    }
-	FPV_return.Transformed_Templates = retTemp;
-    //SuperPosition.convertTo(SuperPosition,CV_8U);
-    threshold(SuperPosition, SuperPosition, Thresh_VAL, MAX_VAL, THRESH_TRUNC);
-    FPV_return.Fwd_Superposition = SuperPosition;
-    return FPV_return;
+		dst.release();
+	}
+	FPV_return->Transformed_Templates = retTemp;
+	//SuperPosition.convertTo(SuperPosition,CV_8U);
+	threshold(SuperPosition, SuperPosition, Thresh_VAL, MAX_VAL, THRESH_TRUNC);
+	FPV_return->Fwd_Superposition = SuperPosition.clone();
+
+	return 0;
 }
 
+void *BackwardTransform(void* pArgin) {
+	BktArg* argin = (BktArg*)pArgin;
+	Mat In = *argin->pIn;
+	Mat Perspective_Transformation_Matrix = (*argin->ptrans).clone();
+	Mat g = *argin->pg;
+	Mat* BPV_return = argin->ret;
 
-Mat BackwardTransform(Mat In, Mat transMap, Mat g){
-    Mat BPV_return;
-    Mat SuperPosition;
-    Mat TransformedTemplates;
-    float sine;
-    double Thresh_VAL = 1;
-    float cosine;
-    float angle;
-    double matrix_determinant;
-    Mat rotation_matrix;
-    int count = g.cols;
-    g.convertTo(g,CV_32F);
+	Mat& SuperPosition = *argin->ret;
+	SuperPosition.setTo(0);
+	Mat TransformedTemplates;
+	float sine;
+	double Thresh_VAL = 1;
+	float cosine;
+	float angle;
+	double matrix_determinant;
+	//Mat rotation_matrix;
+	int count = g.cols;
+	g.convertTo(g, CV_32F);
 
-    SuperPosition = Mat::zeros(In.rows, In.cols, CV_32FC1);
-    //SuperPosition = g.at<float>(0,0)*In.clone();
+	//SuperPosition = Mat::zeros(In.rows, In.cols, CV_32FC1);
+	//SuperPosition = g.at<float>(0,0)*In.clone();
 	//SuperPosition.convertTo(SuperPosition, CV_32F);
 
-//#pragma omp parallel for schedule(guided) num_threads(1)
-    for(int i=0; i<count; i++){
+//#pragma omp parallel for 
+	for (int i = 0; i<count; i++) {
+		Mat rotation_matrix;
 		Mat dst(In.rows, In.cols, CV_32F);
 		if (g.at<float>(0, i) == 0) {
 			continue;
 		}
 
 		uint32_t t_temp = clock();
-		float* ptdst = (float*)dst.data;
-		float* ptIn = (float*)In.data;
-		int* ptidx = transMap.ptr<int>(i);
+		Mat Perspective_Transformation_Matrix_2D = Perspective_Transformation_Matrix.row(i).reshape(0, 2);
 
-		int maxit = In.rows*In.cols;
-//#pragma omp parallel for schedule(guided)
-		for (int n = 0; n < maxit; n++) {
-			if (ptidx[n] == -1)
-				ptdst[n] = 0;
-			else
-				ptdst[n] = ptIn[ptidx[n]];
+		sine = -Perspective_Transformation_Matrix_2D.at<float>(0, 1);
+		cosine = Perspective_Transformation_Matrix_2D.at<float>(0, 0);
+
+		angle = (-1)*roundf(atan(sine / cosine) * 180 / PI);
+
+		matrix_determinant = (sqrt(Perspective_Transformation_Matrix_2D.at<float>(0, 0)*Perspective_Transformation_Matrix_2D.at<float>(1, 1) - Perspective_Transformation_Matrix_2D.at<float>(0, 1)*Perspective_Transformation_Matrix_2D.at<float>(1, 0)));
+		//cout<<"Perspective matrix backward :"<<Perspective_Transformation_Matrix_2D<<endl;
+		//cout<<"Matrix D Backward   "<<matrix_determinant<<endl;
+
+		//if (0) {
+		if (abs(angle) >= 0.0001 || abs(matrix_determinant - 1) >= 0.0001) {
+			//cout<<"Perspective matrix backward :"<<Perspective_Transformation_Matrix_2D<<endl;
+			Point2f src_center(In.cols / 2.0F, In.rows / 2.0F);
+			rotation_matrix = getRotationMatrix2D(src_center, angle, matrix_determinant);
+			//vconcat(rotation_matrix, C, rotation_matrix);
+			warpAffine(In, dst, rotation_matrix, dst.size(), INTER_NEAREST);
 		}
+		else {
+			Perspective_Transformation_Matrix_2D.at<float>(0, 2) = (-1)*Perspective_Transformation_Matrix_2D.at<float>(0, 2);
+			Perspective_Transformation_Matrix_2D.at<float>(1, 2) = (-1)*Perspective_Transformation_Matrix_2D.at<float>(1, 2);
+			warpAffine(In, dst, Perspective_Transformation_Matrix_2D, dst.size(), INTER_NEAREST);
+		}
+//
+//#pragma omp critical
 		t_loop += clock() - t_temp;
 
 		if (test_back) {
@@ -445,18 +522,22 @@ Mat BackwardTransform(Mat In, Mat transMap, Mat g){
 		}
 
 		dst.convertTo(dst, CV_32FC1);
-		
-        Mat dst_scaled = g.at<float>(0,i)*dst;
-#pragma omp critical
-        SuperPosition = SuperPosition + dst_scaled;
 
-        dst.release();
-    }
-    //SuperPosition.convertTo(SuperPosition,CV_32FC1);
-    threshold(SuperPosition, SuperPosition, Thresh_VAL, MAX_VAL, THRESH_TRUNC);
-    //Mat Superposition_image_changed = foregroundBackgroundImageChange(SuperPosition);
-    BPV_return = SuperPosition.clone();
-    return BPV_return;
+		dst*= g.at<float>(0, i);
+
+#pragma omp critical
+		SuperPosition = SuperPosition + dst;
+
+		dst.release();
+	}
+	//SuperPosition.convertTo(SuperPosition,CV_32FC1);
+	threshold(SuperPosition, SuperPosition, Thresh_VAL, MAX_VAL, THRESH_TRUNC);
+	//Mat Superposition_image_changed = foregroundBackgroundImageChange(SuperPosition);
+	//BPV_return = &(SuperPosition);
+	//SuperPosition.copyTo(*BPV_return);
+	//BPV_return = &SuperPosition.clone();
+
+	return 0;
 }
 
 Mat Superimpose_Memory_Images(Mat M, Mat g, int r)
@@ -514,7 +595,8 @@ Mat UpdateCompetition(Mat Transformed_Templates, Mat BackwardTransform, Mat g, i
 		//cout << TranSc << endl;
         if(BackwardTransform_L2 !=0 && T_L2 != 0){
 			if (startscale)
-				q.at<float>(0,i) = T.dot(BackwardTransform)*((TranSc.at<float>(0,i)));
+				/*q.at<float>(0,i) = T.dot(BackwardTransform)*(pow(TranSc.at<float>(0,i),0.8));*/
+				q.at<float>(0, i) = T.dot(BackwardTransform)*(TranSc.at<float>(0, i));
 			//q.at<double>(0, i) = T.dot(BackwardTransform) / T_L2;
 			else
 				q.at<float>(0, i) = T.dot(BackwardTransform);
@@ -523,7 +605,7 @@ Mat UpdateCompetition(Mat Transformed_Templates, Mat BackwardTransform, Mat g, i
         }
 		if (startscale)
 			if (TranSc.at<float>(0,i) < 1)
-				p = 1.5;
+				p = 1;
 
     }
 
@@ -593,6 +675,8 @@ void getTransform(Size img_size, vector < Mat > &transformation_set, vector< Mat
 	double rotrange = framectl ? 0.4 * 180 : 180;
 	double scrange = framectl ? 0.4 * (maxscale_para - minscale_para) : (maxscale_para - minscale_para);
 
+
+
 	double steps = 3.0;
 	if (framectl) {
 		xTranslate_step = max(steps, round(xTranslate_step / 2));
@@ -600,6 +684,10 @@ void getTransform(Size img_size, vector < Mat > &transformation_set, vector< Mat
 		rotate_step = max(steps, round(rotate_step / 2));
 		scale_step = max(steps, round(scale_step / 2));
 	}
+	if (sccenter + scrange / 2 > 1) {
+		sccenter = 1.0 - scrange / 2;
+	}
+
 	if (xTranslate_layer == true) {
 		double xTranslate1 = xTcenter;
 		double xTranslate2 = xTcenter;

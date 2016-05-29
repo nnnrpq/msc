@@ -18,9 +18,6 @@
     <None Include="ClassDiagram.cd" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\MSC_Fast_optmz_warp_pthread.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\region_of_interest.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -34,6 +31,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\main_framemsc_optmz.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MSC_Fast_optmz_warp_pthread_omp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
