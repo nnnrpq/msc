@@ -12,6 +12,7 @@ int acc = 150;		/*number of random number within the range*/
 double maxscale = 1;	/*maximum scaling factor*/
 double minscale = 0.5;	/*minimum scaling factor*/
 
+/* Out of date function, unused any more*/
 Mat Combine_Transform(Mat t1, Mat t2) {
 	/*apply t1 and then t2, the combined transformation matrix is returned*/
 	Mat newrow = (Mat_<double>(1, 3) << 0, 0, 1);
@@ -27,6 +28,12 @@ Mat Combine_Transform(Mat t1, Mat t2) {
 	return result;
 }
 
+/*	Apply random transformation to the source image and return the result
+	The transformation is represented as theta/xtranslate/ytranslate/scale variable
+	Each random number is generated as uniform distribution across a number (acc) of points within range
+	flag = 1 create the random transformation
+	flag = 2 will add small random noise to the previous set of transformation
+	*/
 Mat Rand_Transform(Mat src, double & theta, double & xtranslate, double & ytranslate, double & scale, int flag = 1) {
 	srand(time(NULL));
 	if (flag==1) {

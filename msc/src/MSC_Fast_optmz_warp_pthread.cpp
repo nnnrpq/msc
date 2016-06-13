@@ -1,3 +1,8 @@
+/* pthread for Forward/Backward is used to accelated calculation in MSC
+	But it has too much overhead (already commented out)
+	- Zhangyuan Wang 06/12/2016
+	*/
+
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include<stdlib.h>
@@ -13,6 +18,8 @@
 #include "Image_PreProcessing.h"
 #include <ctime>
 
+/* This is a library which provides similar function warper of pthread in Windows,
+	It might need to be commented when used in Linux*/
 #include <pthread.h>
 #pragma comment(lib,"pthreadVC2.lib")
 

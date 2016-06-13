@@ -1,3 +1,6 @@
+/* Memory leakage and redundant memeory allocation is fixed in this version.
+	- Zhangyuan Wang 06/12/2016*/
+
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include<stdlib.h>

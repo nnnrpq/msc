@@ -1,30 +1,23 @@
-var client = require('ar-drone').createClient();
-const myaddon = require('../build/Release/MSC_drone');
-var addon = myaddon();
+// YOU CAN ALWAYS STOP THE DRONE BY TURNING IT AROUND
+
+var client = require('ar-drone').createClient();	// get the drone client
+const myaddon = require('../build/Release/MSC_drone');	// get the addon
+var addon = myaddon();	// The addon function
 var fs = require('fs');
 
 
 var pngStream = client.getPngStream();
 
-
 var lastPng;
 pngStream
   .on('error', console.log)
-// .on('data', function (pngbuffer) {
-//    lastPng = pngbuffer;
-//    //console.log("it is a buffer:" + buffer.isbuffer(lastpng));
-//    //console.log(addon(lastPng).spin);
-//    //console.log(Date.toString());
-//    var ctrlData = addon(lastPng);
-//    console.log(0);
-//    console.log(ctrlData.spin);
-//})
-//.once('data', lastPng);
+
 
 var timerId;
-const interval = 400;
-setTimeout(function () { } , 1000);
+const interval = 400;		// Timer interval between acquiring data from drone, in ms
+setTimeout(function () { } , 1000);	// Wait for 1s
 
+// Emergency landing, as long as the program has no error and does not quit
 process.on('SIGINT', function () {
     console.log('Got SIGINT. Landing, press Control-C again to force exit.');
 	//clearInterval(timerId);
@@ -38,21 +31,19 @@ process.on('SIGINT', function () {
 });
 
 
+// Set up the transformation set variable
 var finalTrans = {
 	nc : -1,xt : 0,yt : 0,rot : 0,sc : 0
 };
-/* finalTrans.nc = -1;
-finalTrans.xt = 0;
-finalTrans.yt = 0;
-finalTrans.rot = 0;
-finalTrans.sc = 0; */
 
-
+// Take off
 client
     .takeoff();
 	
+// Use bottom camera
 client.config('video:video_channel', 3);
 
+// Control
 client
 	.after(1000,function(){
 		client.up(1);
@@ -60,41 +51,38 @@ client
 	});
 client
     .after(2000,function() {
-		
     if (1) {
         timerId = setInterval(function (lastPng) {
             console.log("once");
-            pngStream
-        .once('data', function (pngBuffer) {
-				console.time("C time");
-                lastPng = pngBuffer;
-                //console.log("It is a buffer:" + Buffer.isBuffer(lastPng));
-                //console.log(addon.myctrl(lastPng));
-                var ctrlData = addon(lastPng,finalTrans.xt,finalTrans.yt,finalTrans.rot,finalTrans.sc,finalTrans.nc);
-                //console.log(ctrlData);
-                if (ctrlData.roll > 0) {
-                    client.left(ctrlData.roll);
-                }
-                else if (ctrlData.roll < 0) {
-                    client.right(-ctrlData.roll);
-                }
-				if (ctrlData.pitch > 0) {
-                    client.back(ctrlData.pitch);
-                }
-                else if (ctrlData.pitch < 0) {
-                    client.front(-ctrlData.pitch);
-                }
-                if (~ctrlData.roll&&~ctrlData.pitch) {
-                    client.stop();
-                }
-				finalTrans.xt=ctrlData.xt;
-				finalTrans.yt = ctrlData.yt;
-				finalTrans.rot = ctrlData.rot;
-				finalTrans.sc = ctrlData.sc;
-				finalTrans.nc = ctrlData.nc;
-				console.timeEnd("C time");
-            })
-        }, interval);
+            pngStream		// Get data from pngStream for once
+				.once('data', function (pngBuffer) {
+						console.time("C time");
+						lastPng = pngBuffer;
+						var ctrlData = addon(lastPng,finalTrans.xt,finalTrans.yt,finalTrans.rot,finalTrans.sc,finalTrans.nc);
+						//console.log(ctrlData);
+						if (ctrlData.roll > 0) {
+							client.left(ctrlData.roll);
+						}
+						else if (ctrlData.roll < 0) {
+							client.right(-ctrlData.roll);
+						}
+						if (ctrlData.pitch > 0) {
+							client.back(ctrlData.pitch);
+						}
+						else if (ctrlData.pitch < 0) {
+							client.front(-ctrlData.pitch);
+						}
+						if (~ctrlData.roll&&~ctrlData.pitch) {
+							client.stop();
+						}
+						finalTrans.xt=ctrlData.xt;
+						finalTrans.yt = ctrlData.yt;
+						finalTrans.rot = ctrlData.rot;
+						finalTrans.sc = ctrlData.sc;
+						finalTrans.nc = ctrlData.nc;
+						console.timeEnd("C time");
+					})
+				}, interval);
     };
 });
 

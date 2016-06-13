@@ -1,3 +1,6 @@
+/* The interface of Forward/Backward functino remains unchanged, compared with MSC_Fast_optmz_warp
+	- Zhangyuan Wang 06/12/2016
+	*/
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include<stdlib.h>

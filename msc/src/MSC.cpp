@@ -1,3 +1,6 @@
+/* This is the original implementation of MSC, with display control added
+		- Zhangyuan Wang 06/12/2016*/
+
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include<stdlib.h>
