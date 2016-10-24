@@ -33,13 +33,15 @@ int framectl = 1;
 int width;
 int height;
 
-void DroneControl(Mat src, Mat mem, TransformationSet finalTrans, Isolate* isolate, Local<Object> &obj) {
+void DroneControl(Mat src, Mat mem, Isolate* isolate, Local<Object> &obj) {
 	double Thresh_VAL = 100;
 	double MAX_VAL = 1; 
 	Mat src_gray;
 	Mat dst; 
 	Mat Fwd_Image;
 	Mat Bwd_Image;
+	TransformationSet finalTrans;
+	finalTrans.nonIdenticalCount = -1;
 
 	//imshow("src", src);
 	////
@@ -70,10 +72,11 @@ void DroneControl(Mat src, Mat mem, TransformationSet finalTrans, Isolate* isola
 
 	Size img_size = Memory_Images.size();
 
+	if (!framectl)
+		finalTrans.nonIdenticalCount = -1;
 	int ret = SL_MSC(Edge_Detected_Image_unpadded, Memory_Images, img_size, &Fwd_Image, &Bwd_Image, finalTrans);
 
-	//finalTrans.xTranslate /= finalTrans.scale;
-	//finalTrans.yTranslate /= finalTrans.scale;
+	
 
 
 	if (finalTrans.xTranslate<-0.1*maxCols) {
@@ -92,23 +95,18 @@ void DroneControl(Mat src, Mat mem, TransformationSet finalTrans, Isolate* isola
 	}
 
 	if (finalTrans.yTranslate<-0.1*maxRows) {
-		/* up is positive*/
-		obj->Set(v8::String::NewFromUtf8(isolate, "lift"), v8::Number::New(isolate, 0.5));
-		cout << "move up" << endl;
+		/* front is positive*/
+		obj->Set(v8::String::NewFromUtf8(isolate, "pitch"), v8::Number::New(isolate, 0.5));
+		cout << "move front" << endl;
 	}
 	else if (finalTrans.yTranslate>0.1*maxRows) {
-		obj->Set(v8::String::NewFromUtf8(isolate, "lift"), v8::Number::New(isolate, -0.5));
-		cout << "move down" << endl;
+		obj->Set(v8::String::NewFromUtf8(isolate, "pitch"), v8::Number::New(isolate, -0.5));
+		cout << "move back" << endl;
 	}
 	else {
-		obj->Set(v8::String::NewFromUtf8(isolate, "lift"), v8::Number::New(isolate, 0));
-		cout << "no up/down" << endl;
+		obj->Set(v8::String::NewFromUtf8(isolate, "pitch"), v8::Number::New(isolate, 0));
+		cout << "no front/back" << endl;
 	}
-	obj->Set(v8::String::NewFromUtf8(isolate, "xt"), v8::Number::New(isolate, finalTrans.xTranslate));
-	obj->Set(v8::String::NewFromUtf8(isolate, "yt"), v8::Number::New(isolate, finalTrans.yTranslate));
-	obj->Set(v8::String::NewFromUtf8(isolate, "rot"), v8::Number::New(isolate, finalTrans.theta));
-	obj->Set(v8::String::NewFromUtf8(isolate, "sc"), v8::Number::New(isolate, finalTrans.scale));
-	obj->Set(v8::String::NewFromUtf8(isolate, "nc"), v8::Number::New(isolate, finalTrans.nonIdenticalCount));
 	return;
 
 }
@@ -134,10 +132,6 @@ void jsmsc(const FunctionCallbackInfo<Value>& args) {
 	//return;
 
 	Local<Object> bufferObj = args[0]->ToObject();
-	TransformationSet finalTrans(args[1]->NumberValue(), args[2]->NumberValue(),
-		args[3]->NumberValue(), args[4]->NumberValue());
-	if (args[5]->NumberValue() == -1)
-		finalTrans.nonIdenticalCount = -1;
 	unsigned char* data = (unsigned char*)node::Buffer::Data(bufferObj);
 	size_t bufferLength = node::Buffer::Length(bufferObj);
 	//cout << bufferLength << endl;
@@ -160,7 +154,7 @@ void jsmsc(const FunctionCallbackInfo<Value>& args) {
 
 	Local<Object> obj = Object::New(isolate);
 	//CalcReturnVal(src, test, isolate, obj);
-	DroneControl(src, mem, finalTrans,isolate, obj);
+	DroneControl(src, mem, isolate, obj);
 
 	args.GetReturnValue().Set(obj);
 

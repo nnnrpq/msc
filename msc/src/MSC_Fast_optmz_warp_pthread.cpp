@@ -113,7 +113,9 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
     k_transformations = new double[layer_count-1];
     
    // k_transformations[layer_count-1] = k_memory;
-
+	if (finalTrans.nonIdenticalCount != -1) {
+		cout << "quick solution" << endl;
+	}
 		getTransform(img_size, transformation_set, G, finalTrans);
 
 	//transformation_set.clear();
