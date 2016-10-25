@@ -1,3 +1,9 @@
+/*	Change approach of transformation frmo mapping pixel value to built-in warpaffine.
+	Interface of Forward/Backward function are changed to allow parallel computing.
+	openmp parallel for is considered in this version, but fails to provide improvement.
+		- Zhangyuan Wang 06/12/2016
+	*/
+
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include<stdlib.h>
@@ -57,7 +63,7 @@ double k_memory = 0.25;
 int test_forw = 0;
 int test_back = 0;
 int test_comp =0;
-int dispInMid = 0;
+int dispInMid = 0;		/* display result in the middle of every iteration*/
 int dispsc = 0;
 int dispg = 0;
 
@@ -106,20 +112,10 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
     
     k_transformations = new double[layer_count-1];
     
-   // k_transformations[layer_count-1] = k_memory;
 
-		getTransform(img_size, transformation_set, G, finalTrans);
+	getTransform(img_size, transformation_set, G, finalTrans);
 
-	//transformation_set.clear();
 
-	//vector<Mat>().swap(transformation_set);
-
-	/* get the mapping for transformation*/
-	//vector<Mat> MapForw, MapBack;
-	//MapForw.reserve(layer_count - 1);
-	//MapBack.reserve(layer_count - 1);
-	//getTransMap(img_size, FORWARD, MapForw);
-	//getTransMap(img_size, BACKWARD, MapBack);
 
 
 
@@ -136,15 +132,17 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 		BPV[i] = Mat::zeros(Input_Image.rows, Input_Image.cols, CV_32F);
 	}
 	int count = 0;
+
+
     while(iteration_count > 0){
         iteration_count--;
         //printf("About to call MSC %d\n",count++);
         ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, transformation_set, &G, k_transformations);
         
+
+		/* check the g value every 5 iterations*/
 		bool flag = 1;		/* 1 for stopping the msc*/
         if(iteration_count %5 == 0){
-			///* only inspect before the scaling layer*/
-
 			for (int kk = 0; kk < G.size(); kk++) {
 				//cout << "-------\n" << G[kk] << "-------\n";
 				if (countNonZero(G[kk]) != 1) {
@@ -161,10 +159,8 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 				}
 			}
 
-
 			if (dispInMid) {
 				imshow("FPV_Forward[1]", (*Fwd_Path) * 255);
-
 				imshow("BPV[1]", (*Bwd_Path) * 255);
 				cvWaitKey(0);
 			}
@@ -179,42 +175,21 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 					sc = sc_val[idxTrans[3]];
 				else
 					sc = 1;
-				//double xT = 0;
-				//double yT = 0;
-				//double ang = 0;
-				//double sc = 1;
 				finalTrans = TransformationSet(xT, yT, ang, sc);
 				break;
 			}
         }
         //printf("MSC dot products are done\n");
         verified_ret = Verify_Object(Input_Image, *Bwd_Path, dot_product_input_object);
-        /*
-        if(verified_ret == 0){
-            printf("Image not recognized\n");
-        }else{
-            printf("Everything seems to be fine\n");
-        }
-         */
     }
 	ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, transformation_set, &G, k_transformations);
 	//printf("The value of verified_ret is %g\n", verified_ret);
 
-	//xT_val.clear();
-	//yT_val.clear();
-	//rot_val.clear();
-	//sc_val.clear();
 
 	vector<double>().swap(xT_val);
 	vector<double>().swap(yT_val);
 	vector<double>().swap(rot_val);
 	vector<double>().swap(sc_val);
-
-	//MapForw.clear();
-	//vector<Mat>().swap(MapForw);
-	//MapBack.clear();
-	//G.clear();
-	//vector<Mat>().swap(MapBack);
 	vector<Mat>().swap(G);
 
 	t_total = clock()-t_total;
@@ -244,12 +219,6 @@ int MapSeekingCircuit(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fw
      ]
      */
     
-    //FPV[0].Fwd_Superposition = Input_Image.clone();
-	//FPV[1].Transformed_Templates = Mat::zeros(Size(Input_Image.rows*Input_Image.cols, g[0].cols), CV_32F);
-    
-    //printf("Backward path superposition \n");
-   // BPV[layers-1] = Superimpose_Memory_Images(Memory_Images, g[layers-1], img_size.height).clone();
-
 	threshold(Memory_Images, BPV[layers - 1], 1, MAX_VAL, THRESH_TRUNC);
 	BPV[layers - 1].convertTo(BPV[layers - 1], CV_32FC1);
     
@@ -367,11 +336,6 @@ Fwd_Path_Values ForwardTransform(Mat In, Fwd_Path_Values & InFP, Mat Perspective
 		}
 		t_loop += clock() - t_temp;
 
-
-		//Transc.at<float>(0,i) = (sqrt(float(countNonZero(In)) / float(countNonZero(dst))));
-		//Transc.at<float>(0, i) = sqrt(float(nonzeroIn) / nonzeroOut);
-		//Transc.push_back(1.0);
-
 		if (0) {
 			dst.convertTo(temp, CV_8U, 255);
 			imshow("temp", temp); waitKey();
@@ -388,11 +352,7 @@ Fwd_Path_Values ForwardTransform(Mat In, Fwd_Path_Values & InFP, Mat Perspective
 			//cout << "g=" << g.at<float>(0, i) << " angle=" << angle << " scale=" << matrix_determinant << "\n" << Perspective_Transformation_Matrix_2D << endl;
 			cvWaitKey();
 		}
-        /*
-        if(g.at<double>(0,i) < 0.3){
-            g.at<double>(0,i) = 0;
-        }
-         */
+
 		dst.convertTo(dst, CV_32FC1);
         Mat dst_scaled = g.at<float>(0,i)*dst;
         SuperPosition = SuperPosition + dst_scaled;
@@ -423,11 +383,9 @@ void BackwardTransform(Mat In, Mat Perspective_Transformation_Matrix, Mat g, Mat
     int count = g.cols;
     g.convertTo(g,CV_32F);
 
-    //SuperPosition = Mat::zeros(In.rows, In.cols, CV_32FC1);
-    //SuperPosition = g.at<float>(0,0)*In.clone();
-	//SuperPosition.convertTo(SuperPosition, CV_32F);
 	SuperPosition.setTo(0);
 	//cout << "g=" << g << endl;
+
 //#pragma omp parallel for
     for(int i=0; i<count; i++){
 		Mat dst(In.rows, In.cols, CV_32F);
@@ -479,9 +437,6 @@ void BackwardTransform(Mat In, Mat Perspective_Transformation_Matrix, Mat g, Mat
     }
     //SuperPosition.convertTo(SuperPosition,CV_32FC1);
     threshold(SuperPosition, SuperPosition, Thresh_VAL, MAX_VAL, THRESH_TRUNC);
-    //Mat Superposition_image_changed = foregroundBackgroundImageChange(SuperPosition);
-    //BPV_return = SuperPosition.clone();
-    //return BPV_return;
 }
 
 Mat Superimpose_Memory_Images(Mat M, Mat g, int r)

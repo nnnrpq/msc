@@ -1,3 +1,7 @@
+/* The main function for creating the nodejs addon for MSC
+	- Zhangyuan Wang 06/12/2016
+	*/
+
 #ifdef WIN32
 #pragma warning( push ) 
 #pragma warning( disable: 4530 )
@@ -33,6 +37,9 @@ int framectl = 1;
 int width;
 int height;
 
+
+/* Control function, basically follow the same approach as the main function of MSC project.
+	Call MSC and set up the command variable for drone*/
 void DroneControl(Mat src, Mat mem, TransformationSet finalTrans, Isolate* isolate, Local<Object> &obj) {
 	double Thresh_VAL = 100;
 	double MAX_VAL = 1; 
@@ -75,7 +82,7 @@ void DroneControl(Mat src, Mat mem, TransformationSet finalTrans, Isolate* isola
 	//finalTrans.xTranslate /= finalTrans.scale;
 	//finalTrans.yTranslate /= finalTrans.scale;
 
-
+	/* Following lines set the field of returned object in js */
 	if (finalTrans.xTranslate<-0.1*maxCols) {
 		/* left is positive*/
 		obj->Set(v8::String::NewFromUtf8(isolate, "roll"), v8::Number::New(isolate, 0.5));
@@ -109,63 +116,38 @@ void DroneControl(Mat src, Mat mem, TransformationSet finalTrans, Isolate* isola
 	obj->Set(v8::String::NewFromUtf8(isolate, "rot"), v8::Number::New(isolate, finalTrans.theta));
 	obj->Set(v8::String::NewFromUtf8(isolate, "sc"), v8::Number::New(isolate, finalTrans.scale));
 	obj->Set(v8::String::NewFromUtf8(isolate, "nc"), v8::Number::New(isolate, finalTrans.nonIdenticalCount));
+	
 	return;
-
 }
 
+/* Main function to be generated as the addon*/
 void jsmsc(const FunctionCallbackInfo<Value>& args) {
 	Isolate* isolate = args.GetIsolate();
 
-	//if (!args[0]->IsArrayBuffer()) {
-	//	/*isolate->ThrowException(v8::Exception::TypeError(
-	//		v8::String::NewFromUtf8(isolate, "Wrong data type~~~~")));*/
-	//	cout << "It is not array buffer" << endl;
-	//	//args.GetReturnValue().Set(0);
-	//	//return;
-	//}
-	//else {
-	//	cout<<"It is array buffer"<<endl;
-	//	//args.GetReturnValue().Set(10);
-	//}
-
-	//Local<Object> obj = Object::New(isolate);
-	//obj->Set(v8::String::NewFromUtf8(isolate, "spin"), v8::Number::New(isolate, -0.3));
-	//args.GetReturnValue().Set(obj);
-	//return;
-
+	/* parse the input*/
 	Local<Object> bufferObj = args[0]->ToObject();
 	TransformationSet finalTrans(args[1]->NumberValue(), args[2]->NumberValue(),
 		args[3]->NumberValue(), args[4]->NumberValue());
 	if (args[5]->NumberValue() == -1)
 		finalTrans.nonIdenticalCount = -1;
+
+	/* get Mat format from the input*/
 	unsigned char* data = (unsigned char*)node::Buffer::Data(bufferObj);
 	size_t bufferLength = node::Buffer::Length(bufferObj);
-	//cout << bufferLength << endl;
-	//cout<<Mat(Size(1280, 720), CV_8UC3, data);
-	//cout << data;
-
 	Mat src = Mat(Size(width, height), CV_8UC3);
-	src = imdecode(Mat(bufferLength,1,CV_8U,data), CV_LOAD_IMAGE_GRAYSCALE);
+	src = imdecode(Mat(bufferLength,1,CV_8U,data), CV_LOAD_IMAGE_GRAYSCALE);	/* decode from the data*/
 
+	/* read the memory file*/
 	Mat mem = imread("../img_1.png", CV_LOAD_IMAGE_GRAYSCALE);
 
-	//try {
-	//	imshow("testimg!", img);
-	//}
-	//catch (int err) {
-	//	cout << "error! " << err << endl;
-	//}
-	//waitKey();
-	//v8::Local<v8::ArrayBuffer> argBuff = node::ArrayBuffer::ToArrayBuffer(isolate);
-
 	Local<Object> obj = Object::New(isolate);
-	//CalcReturnVal(src, test, isolate, obj);
 	DroneControl(src, mem, finalTrans,isolate, obj);
 
+	/* set the return value to obj*/
 	args.GetReturnValue().Set(obj);
-
 }
 
+/* Must include for generating addon as function*/
 void CreateFunction(const FunctionCallbackInfo<Value>& args) {
 	Isolate* isolate = args.GetIsolate();
 
@@ -177,18 +159,15 @@ void CreateFunction(const FunctionCallbackInfo<Value>& args) {
 
 	args.GetReturnValue().Set(fn);
 }
+
+/*test function, guide the drone to get away from a light*/
 void CalcReturnVal(Mat img, Isolate* isolate, Local<Object> &obj) {
-	/*test function, guide the drone to get away from a light*/
 	Mat thimg;
 	//threshold(img, thimg, 220, 255, CV_THRESH_OTSU);
 	threshold(img, thimg, 220, 255, CV_THRESH_BINARY);
 	int cols = thimg.cols;
 	int left = countNonZero(thimg.colRange(0, round(cols / 2)));
 	int right = countNonZero(thimg.colRange(round(cols / 2), round(cols)));
-	//imshow("bw", thimg);
-	//waitKey();
-	//
-
 
 	if ((left + right)<0.1*cols*thimg.rows) {
 		obj->Set(v8::String::NewFromUtf8(isolate, "spin"), v8::Number::New(isolate, 0));
@@ -204,9 +183,9 @@ void CalcReturnVal(Mat img, Isolate* isolate, Local<Object> &obj) {
 		cout << "Turn counter clkwise" << endl;
 	}
 	return;
-
 }
 
+/* Refer to nodejs document on addon function*/
 void Init(Local<Object> exports, Local<Object> module) {
 	NODE_SET_METHOD(module, "exports", CreateFunction);
 }

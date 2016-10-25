@@ -1,3 +1,7 @@
+/*	Frame by frame optimazation is added to this version.
+	Also warpperspective is replaced by calculating the mapping manually.
+		- Zhangyuan Wang 06/12
+*/
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include<stdlib.h>

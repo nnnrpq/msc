@@ -1,3 +1,7 @@
+/*	Experiment with the semphore approach in hope of speeding up.
+	But it is shown to be unnecessary.
+	 - Zhangyuan Wang 06/12/2016
+	*/
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include<stdlib.h>

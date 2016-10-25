@@ -1,3 +1,6 @@
+/* Memory leakage and redundant memeory allocation is fixed in this version.
+	- Zhangyuan Wang 06/12/2016*/
+
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include<stdlib.h>
@@ -319,7 +322,7 @@ Fwd_Path_Values ForwardTransform(Mat In, Fwd_Path_Values & InFP, Mat transMap, M
     SuperPosition = InFP.Fwd_Superposition.setTo(0);
 
 	
-
+//#pragma omp parallel for schedule(guided) num_threads(1)
     for(int i=0; i<count; i++){
 		Mat dst(In.rows, In.cols, CV_32F);
 		if (g.at<float>(0, i) == 0) {
@@ -338,7 +341,7 @@ Fwd_Path_Values ForwardTransform(Mat In, Fwd_Path_Values & InFP, Mat transMap, M
 		int maxit = In.rows*In.cols;
 		int nonzeroIn = 0;
 		int nonzeroOut = 0;
-//#pragma omp parallel for
+//#pragma omp parallel for schedule(guided)
 		for (int n = 0; n < maxit; n++) {
 			if (ptidx[n] == -1)
 				ptdst[n] = 0;
@@ -380,10 +383,12 @@ Fwd_Path_Values ForwardTransform(Mat In, Fwd_Path_Values & InFP, Mat transMap, M
         }
          */
 		dst.convertTo(dst, CV_32FC1);
-        Mat dst_scaled = g.at<float>(0,i)*dst;
-        SuperPosition = SuperPosition + dst_scaled;
+		dst *= g.at<float>(0, i);
+        //Mat dst_scaled = g.at<float>(0,i)*dst;
+#pragma omp critical
+        SuperPosition = SuperPosition + dst;
 
-		dst_scaled.reshape(0, 1).copyTo(retTemp.row(i));
+		dst.reshape(0, 1).copyTo(retTemp.row(i));
 
 
         dst.release();
@@ -413,7 +418,7 @@ Mat BackwardTransform(Mat In, Mat transMap, Mat g){
     //SuperPosition = g.at<float>(0,0)*In.clone();
 	//SuperPosition.convertTo(SuperPosition, CV_32F);
 
-//#pragma omp parallel for
+//#pragma omp parallel for schedule(guided) num_threads(1)
     for(int i=0; i<count; i++){
 		Mat dst(In.rows, In.cols, CV_32F);
 		if (g.at<float>(0, i) == 0) {
@@ -426,7 +431,7 @@ Mat BackwardTransform(Mat In, Mat transMap, Mat g){
 		int* ptidx = transMap.ptr<int>(i);
 
 		int maxit = In.rows*In.cols;
-//#pragma omp parallel for
+//#pragma omp parallel for schedule(guided)
 		for (int n = 0; n < maxit; n++) {
 			if (ptidx[n] == -1)
 				ptdst[n] = 0;
@@ -445,6 +450,7 @@ Mat BackwardTransform(Mat In, Mat transMap, Mat g){
 		dst.convertTo(dst, CV_32FC1);
 		
         Mat dst_scaled = g.at<float>(0,i)*dst;
+#pragma omp critical
         SuperPosition = SuperPosition + dst_scaled;
 
         dst.release();

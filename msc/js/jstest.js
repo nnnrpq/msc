@@ -1,12 +1,13 @@
-var client = require('ar-drone').createClient();
-const myaddon = require('../build/Release/MSC_drone');
-var addon = myaddon();
+// YOU CAN ALWAYS STOP THE DRONE BY TURNING IT AROUND
+
+var client = require('ar-drone').createClient();	// get the drone client
+const myaddon = require('../build/Release/MSC_drone');	// get the addon
+var addon = myaddon();	// The addon function
 var fs = require('fs');
 var async = require('async');
 
 
 var pngStream = client.getPngStream();
-
 
 var lastPng;
 pngStream.on('error', console.log);
@@ -14,6 +15,7 @@ pngStream.on('error', console.log);
 const interval = 400;
 setTimeout(function () { } , 1000);
 
+// Emergency landing, as long as the program has no error and does not quit
 process.on('SIGINT', function () {
     console.log('Got SIGINT. Landing, press Control-C again to force exit.');
 	//clearInterval(timerId);
@@ -27,6 +29,7 @@ process.on('SIGINT', function () {
 });
 
 
+// Set up the transformation set variable
 var finalTrans = {
 	nc : -1,xt : 0,yt : 0,rot : 0,sc : 0
 };

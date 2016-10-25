@@ -11,6 +11,10 @@ using namespace cv;
 using namespace std;
 /// Global variables
 
+/* The preprocessing part needs to be redesigned
+in order to meet the requirement of real world image
+Zhangyuan 06/12/2016*/
+
 
 Mat orientationMap(const cv::Mat& mag, const cv::Mat& ori, double thresh = 1.0)
 {
