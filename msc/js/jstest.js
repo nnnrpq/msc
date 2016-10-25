@@ -2,26 +2,15 @@ var client = require('ar-drone').createClient();
 const myaddon = require('../build/Release/MSC_drone');
 var addon = myaddon();
 var fs = require('fs');
+var async = require('async');
 
 
 var pngStream = client.getPngStream();
 
 
 var lastPng;
-pngStream
-  .on('error', console.log)
-// .on('data', function (pngbuffer) {
-//    lastPng = pngbuffer;
-//    //console.log("it is a buffer:" + buffer.isbuffer(lastpng));
-//    //console.log(addon(lastPng).spin);
-//    //console.log(Date.toString());
-//    var ctrlData = addon(lastPng);
-//    console.log(0);
-//    console.log(ctrlData.spin);
-//})
-//.once('data', lastPng);
+pngStream.on('error', console.log);
 
-var timerId;
 const interval = 400;
 setTimeout(function () { } , 1000);
 
@@ -47,26 +36,12 @@ finalTrans.yt = 0;
 finalTrans.rot = 0;
 finalTrans.sc = 0; */
 
-
-client
-    .takeoff();
-	
-client.config('video:video_channel', 0);
-
-client
-	.after(1000,function(){
-		client.up(1);
-		console.log("up");
-	});
-client
-    .after(2000,function() {
-		
-    if (1) {
-        timerId = setInterval(function (lastPng) {
-            console.log("once");
-            pngStream
-        .once('data', function (pngBuffer) {
-				console.time("C time");
+var mainLoop = function () {
+    setInterval(function (lastPng) {
+        console.log("once");
+        pngStream
+            .once('data', function (pngBuffer) {
+                console.time("C time");
                 lastPng = pngBuffer;
                 //console.log("It is a buffer:" + Buffer.isBuffer(lastPng));
                 //console.log(addon.myctrl(lastPng));
@@ -78,43 +53,47 @@ client
                 else if (ctrlData.roll < 0) {
                     client.right(-ctrlData.roll);
                 }
-		if (ctrlData.lift > 0) {
-                    client.front(ctrlData.lift);
+                if (ctrlData.lift > 0) {
+                    client.up(ctrlData.lift);
                 }
                 else if (ctrlData.lift < 0) {
-                    client.back(-ctrlData.lift);
+                    client.down(-ctrlData.lift);
                 }
                 if (~ctrlData.roll&&~ctrlData.lift) {
                     client.stop();
                 }
-				finalTrans.xt=ctrlData.xt;
-				finalTrans.yt = ctrlData.yt;
-				finalTrans.rot = ctrlData.rot;
-				finalTrans.sc = ctrlData.sc;
-				finalTrans.nc = ctrlData.nc;
-				console.timeEnd("C time");
-            })
-        }, interval);
-    };
+                finalTrans.xt=ctrlData.xt;
+                finalTrans.yt = ctrlData.yt;
+                finalTrans.rot = ctrlData.rot;
+                finalTrans.sc = ctrlData.sc;
+                finalTrans.nc = ctrlData.nc;
+                console.timeEnd("C time");
+            });
+        }, 
+    interval);
+};
+
+async.waterfall([
+    function (callback) {
+        var options = {
+            key : 'video:video_channel',
+            value : 0,
+            timeout : 1000
+        };
+        console.log("Step 1");
+        client.config(options, callback);
+    },
+    function (callback) {
+        console.log("Step 2");
+        client.takeoff();
+        setTimeout(function () { callback(null); }, 1500);
+    },
+    function (callback) {
+        console.log("Step 3");
+        mainLoop();
+    }
+], function (err, result) {
+    if (err) {
+        console.log(err);
+    }
 });
-
-
-
-
-
-
-//fs.writeFile('./logo.png', lastPng, 'binary', function(err){
-//            if (err) throw err
-//            console.log('File saved.')
-//        })
-
-//var vdata;
-// var buf = new Buffer ([0x62,0x75,0x66,0x66,0x65,0x72]);
-//var buf = new Buffer ([1,2,3,4,5]);
-//imTest(buf);
-
-// video.on('data', imTest.imTest);
-// console.log('This shoul');
-
-//console.log(addon.isbuf(lastPng));
-
