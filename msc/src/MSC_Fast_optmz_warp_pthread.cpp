@@ -203,7 +203,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 			}
         }
         //printf("MSC dot products are done\n");
-        verified_ret = Verify_Object(Input_Image, *Bwd_Path, dot_product_input_object);
+        // verified_ret = Verify_Object(Input_Image, *Bwd_Path, dot_product_input_object);
         /*
         if(verified_ret == 0){
             printf("Image not recognized\n");
@@ -214,6 +214,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
     }
 	ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, transformation_set, &G, k_transformations);
 	//printf("The value of verified_ret is %g\n", verified_ret);
+	ret = Verify_Object(Input_Image, *Bwd_Path, dot_product_input_object);
 
 	//xT_val.clear();
 	//yT_val.clear();

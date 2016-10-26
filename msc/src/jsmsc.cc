@@ -65,8 +65,8 @@ void DroneControl(Mat src, Mat mem, TransformationSet finalTrans, Isolate* isola
 	Mat mem_img_edge(mem_img_canny.rows, mem_img_canny.cols, CV_32FC1);
 	threshold(mem_img_canny, mem_img_edge, Thresh_VAL, MAX_VAL, THRESH_BINARY);
 
-	 width = src.cols;
-	 height = src.rows;
+	width = src.cols;
+	height = src.rows;
 	
 	int maxRows = Edge_Detected_Image_unpadded.rows;
 	int maxCols = Edge_Detected_Image_unpadded.cols*width/height;
@@ -100,17 +100,26 @@ void DroneControl(Mat src, Mat mem, TransformationSet finalTrans, Isolate* isola
 
 	if (finalTrans.yTranslate<-0.1*maxRows) {
 		/* up is positive*/
-		obj->Set(v8::String::NewFromUtf8(isolate, "lift"), v8::Number::New(isolate, 0.5));
-		cout << "move up" << endl;
+		obj->Set(v8::String::NewFromUtf8(isolate, "pitch"), v8::Number::New(isolate, 0.5));
+		cout << "move front" << endl;
 	}
 	else if (finalTrans.yTranslate>0.1*maxRows) {
-		obj->Set(v8::String::NewFromUtf8(isolate, "lift"), v8::Number::New(isolate, -0.5));
-		cout << "move down" << endl;
+		obj->Set(v8::String::NewFromUtf8(isolate, "pitch"), v8::Number::New(isolate, -0.5));
+		cout << "move back" << endl;
 	}
 	else {
-		obj->Set(v8::String::NewFromUtf8(isolate, "lift"), v8::Number::New(isolate, 0));
-		cout << "no up/down" << endl;
+		obj->Set(v8::String::NewFromUtf8(isolate, "pitch"), v8::Number::New(isolate, 0));
+		cout << "no translation" << endl;
 	}
+
+	if (ret <= 0.3) {
+		obj->Set(v8::String::NewFromUtf8(isolate, "lift"), v8::Number::New(isolate, 0.5));
+		cout << "move up" << endl;
+	} else {
+		obj->Set(v8::String::NewFromUtf8(isolate, "lift"), v8::Number::New(isolate, 0));
+		cout << "dot product: " << ret << endl;
+	}
+
 	obj->Set(v8::String::NewFromUtf8(isolate, "xt"), v8::Number::New(isolate, finalTrans.xTranslate));
 	obj->Set(v8::String::NewFromUtf8(isolate, "yt"), v8::Number::New(isolate, finalTrans.yTranslate));
 	obj->Set(v8::String::NewFromUtf8(isolate, "rot"), v8::Number::New(isolate, finalTrans.theta));

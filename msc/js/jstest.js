@@ -50,19 +50,29 @@ var mainLoop = function () {
                 //console.log(addon.myctrl(lastPng));
                 var ctrlData = addon(lastPng,finalTrans.xt,finalTrans.yt,finalTrans.rot,finalTrans.sc,finalTrans.nc);
                 console.log(ctrlData);
+                
                 if (ctrlData.roll > 0) {
                     client.left(ctrlData.roll);
                 }
                 else if (ctrlData.roll < 0) {
                     client.right(-ctrlData.roll);
                 }
+
+                if (ctrlData.pitch > 0) {
+                    client.front(ctrlData.pitch);
+                }
+                else if (ctrlData.pitch < 0) {
+                    client.back(-ctrlData.pitch);
+                }
+                
                 if (ctrlData.lift > 0) {
                     client.up(ctrlData.lift);
                 }
                 else if (ctrlData.lift < 0) {
                     client.down(-ctrlData.lift);
                 }
-                if (~ctrlData.roll&&~ctrlData.lift) {
+                
+                if (~ctrlData.roll&&~ctrlData.pitch&&~ctrlData.lift) {
                     client.stop();
                 }
                 finalTrans.xt=ctrlData.xt;
