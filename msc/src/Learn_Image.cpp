@@ -41,10 +41,11 @@ double Verify_Object(Mat Input_Object, Mat Backward_Path_Object, double dot_prod
 	//imshow("result", Backward_Path_Object);
 	//waitKey();
 
-    //if(dot_product_transformations < 0.2*dot_product_input_object){
-    //    return 0;
-    //}
-    return dot_product_transformations;
+    if(dot_product_transformations < 0.2*dot_product_input_object){
+        return 0;
+    }
+
+    return 1;
 }
 
 Mat Learn_New_Transformation(Mat Input_Image, Mat Memory_Images, vector<int> row_size){

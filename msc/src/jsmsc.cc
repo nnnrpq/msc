@@ -113,8 +113,11 @@ void DroneControl(Mat src, Mat mem, TransformationSet finalTrans, Isolate* isola
 	}
 
 	if (ret <= 0.3) {
-		obj->Set(v8::String::NewFromUtf8(isolate, "lift"), v8::Number::New(isolate, 0.5));
+		obj->Set(v8::String::NewFromUtf8(isolate, "lift"), v8::Number::New(isolate, 1));
+		obj->Set(v8::String::NewFromUtf8(isolate, "roll"), v8::Number::New(isolate, 0));
+		obj->Set(v8::String::NewFromUtf8(isolate, "pitch"), v8::Number::New(isolate, 0));
 		cout << "move up" << endl;
+		cout << "dot product: " << ret << endl;
 	} else {
 		obj->Set(v8::String::NewFromUtf8(isolate, "lift"), v8::Number::New(isolate, 0));
 		cout << "dot product: " << ret << endl;

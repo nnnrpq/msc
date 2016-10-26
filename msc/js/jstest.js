@@ -12,8 +12,10 @@ var pngStream = client.getPngStream();
 var lastPng;
 pngStream.on('error', console.log);
 
-const interval = 400;
+const interval = 1000;
 setTimeout(function () { } , 1000);
+
+var counter = 0;
 
 // Emergency landing, as long as the program has no error and does not quit
 process.on('SIGINT', function () {
@@ -72,10 +74,15 @@ var mainLoop = function () {
                     client.down(-ctrlData.lift);
                 }
                 
-                if (~ctrlData.roll&&~ctrlData.pitch&&~ctrlData.lift) {
+		if (~ctrlData.roll && ~ctrlData.pitch && ~ctrlData.lift && (counter > 5)) {
                     client.stop();
+                } else if (~ctrlData.roll && ~ctrlData.pitch && ~ctrlData.lift) {
+                    counter = counter + 1;
+                } else {
+                    counter = counter - 1;
                 }
-                finalTrans.xt=ctrlData.xt;
+
+                finalTrans.xt = ctrlData.xt;
                 finalTrans.yt = ctrlData.yt;
                 finalTrans.rot = ctrlData.rot;
                 finalTrans.sc = ctrlData.sc;
@@ -90,7 +97,16 @@ async.waterfall([
     function (callback) {
         var options = {
             key : 'video:video_channel',
-            value : 0,
+            value : 3,
+            timeout : 1000
+        };
+        console.log("Step 1");
+        client.config(options, callback);
+    },
+    function (callback) {
+        var options = {
+            key : 'control:altitude_max',
+            value : 100000,
             timeout : 1000
         };
         console.log("Step 1");
@@ -99,7 +115,7 @@ async.waterfall([
     function (callback) {
         console.log("Step 2");
         client.takeoff();
-        setTimeout(function () { callback(null); }, 1500);
+        setTimeout(function () { callback(null); }, 3000);
     },
     function (callback) {
         console.log("Step 3");
