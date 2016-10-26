@@ -41,14 +41,14 @@ int Verify_Object(Mat Input_Object, Mat Backward_Path_Object, double dot_product
 	// //imshow("result", Backward_Path_Object);
 	// //waitKey();
 
-    if(dot_product_transformations < 0.2*dot_product_input_object){
+    /*if(dot_product_transformations < 0.2*dot_product_input_object){
         return 0;
     }
 
-    return 1;
+    return 1;*/
 
     double correlation;
-    double delta = 0.1 * (Backward_Path_Object.total() / Input_Object.total()) * dot_product_input_object;
+    double delta = 0.008 * (Backward_Path_Object.total() / Input_Object.total()) * dot_product_input_object;
     correlation = Input_Object.dot(Backward_Path_Object);
 
     if (correlation < delta) {

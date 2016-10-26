@@ -12,7 +12,7 @@ var pngStream = client.getPngStream();
 var lastPng;
 pngStream.on('error', console.log);
 
-const interval = 1000;
+const interval = 400;
 setTimeout(function () { } , 1000);
 
 var counter = 0;
@@ -27,7 +27,7 @@ process.on('SIGINT', function () {
 		console.log("battery level:",client.battery());
         //client.land();
         process.exit(0);
-    }, 1000);
+    }, 10000);
 });
 
 
@@ -41,11 +41,18 @@ finalTrans.yt = 0;
 finalTrans.rot = 0;
 finalTrans.sc = 0; */
 
+var iter = 0;
 var mainLoop = function () {
     setInterval(function (lastPng) {
         console.log("once");
         pngStream
             .once('data', function (pngBuffer) {
+                var filename = 'logo' + iter.toString() + '.png';
+                fs.writeFile(filename, pngBuffer, 'binary', function(err) {
+                    if (err) throw err;
+                    console.log('File saved.');
+                });
+                iter = iter + 1;
                 console.time("C time");
                 lastPng = pngBuffer;
                 //console.log("It is a buffer:" + Buffer.isBuffer(lastPng));
@@ -53,19 +60,19 @@ var mainLoop = function () {
                 var ctrlData = addon(lastPng,finalTrans.xt,finalTrans.yt,finalTrans.rot,finalTrans.sc,finalTrans.nc);
                 console.log(ctrlData);
                 
-                if (ctrlData.roll > 0) {
-                    client.left(ctrlData.roll);
-                }
-                else if (ctrlData.roll < 0) {
-                    client.right(-ctrlData.roll);
-                }
+                // if (ctrlData.roll > 0) {
+                //     client.left(ctrlData.roll);
+                // }
+                // else if (ctrlData.roll < 0) {
+                //     client.right(-ctrlData.roll);
+                // }
 
-                if (ctrlData.pitch > 0) {
-                    client.front(ctrlData.pitch);
-                }
-                else if (ctrlData.pitch < 0) {
-                    client.back(-ctrlData.pitch);
-                }
+                // if (ctrlData.pitch > 0) {
+                //     client.front(ctrlData.pitch);
+                // }
+                // else if (ctrlData.pitch < 0) {
+                //     client.back(-ctrlData.pitch);
+                // }
                 
                 if (ctrlData.lift > 0) {
                     client.up(ctrlData.lift);
@@ -74,12 +81,16 @@ var mainLoop = function () {
                     client.down(-ctrlData.lift);
                 }
                 
-		if (~ctrlData.roll && ~ctrlData.pitch && ~ctrlData.lift && (counter > 5)) {
-                    client.stop();
-                } else if (~ctrlData.roll && ~ctrlData.pitch && ~ctrlData.lift) {
+		if ((ctrlData.roll == 0) && (ctrlData.pitch == 0) && (ctrlData.lift == 0) && (counter > 5)) {
+                    client.land();
+                } else if ((ctrlData.roll == 0) && (ctrlData.pitch == 0) && (ctrlData.lift == 0)) {
                     counter = counter + 1;
+                    console.log('COUNT');
                 } else {
                     counter = counter - 1;
+                    if (counter < 0) {
+                        counter = 0;
+                    }
                 }
 
                 finalTrans.xt = ctrlData.xt;

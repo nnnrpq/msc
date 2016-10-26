@@ -85,12 +85,12 @@ void DroneControl(Mat src, Mat mem, TransformationSet finalTrans, Isolate* isola
 	/* Following lines set the field of returned object in js */
 	if (finalTrans.xTranslate<-0.1*maxCols) {
 		/* left is positive*/
-		obj->Set(v8::String::NewFromUtf8(isolate, "roll"), v8::Number::New(isolate, 0.5));
+		obj->Set(v8::String::NewFromUtf8(isolate, "roll"), v8::Number::New(isolate, 0.1));
 		cout << "move left" << endl;
 		//return;
 	}
 	else if (finalTrans.xTranslate>0.1*maxCols) {
-		obj->Set(v8::String::NewFromUtf8(isolate, "roll"), v8::Number::New(isolate, -0.5));
+		obj->Set(v8::String::NewFromUtf8(isolate, "roll"), v8::Number::New(isolate, -0.1));
 		cout << "move right" << endl;
 	}
 	else {
@@ -100,11 +100,11 @@ void DroneControl(Mat src, Mat mem, TransformationSet finalTrans, Isolate* isola
 
 	if (finalTrans.yTranslate<-0.1*maxRows) {
 		/* up is positive*/
-		obj->Set(v8::String::NewFromUtf8(isolate, "pitch"), v8::Number::New(isolate, 0.5));
+		obj->Set(v8::String::NewFromUtf8(isolate, "pitch"), v8::Number::New(isolate, 0.1));
 		cout << "move front" << endl;
 	}
 	else if (finalTrans.yTranslate>0.1*maxRows) {
-		obj->Set(v8::String::NewFromUtf8(isolate, "pitch"), v8::Number::New(isolate, -0.5));
+		obj->Set(v8::String::NewFromUtf8(isolate, "pitch"), v8::Number::New(isolate, -0.1));
 		cout << "move back" << endl;
 	}
 	else {
@@ -113,7 +113,7 @@ void DroneControl(Mat src, Mat mem, TransformationSet finalTrans, Isolate* isola
 	}
 
 	if (ret == 0) {
-		obj->Set(v8::String::NewFromUtf8(isolate, "lift"), v8::Number::New(isolate, 1));
+		obj->Set(v8::String::NewFromUtf8(isolate, "lift"), v8::Number::New(isolate, 0.5));
 		obj->Set(v8::String::NewFromUtf8(isolate, "roll"), v8::Number::New(isolate, 0));
 		obj->Set(v8::String::NewFromUtf8(isolate, "pitch"), v8::Number::New(isolate, 0));
 		cout << "move up" << endl;
