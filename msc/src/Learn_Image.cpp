@@ -31,21 +31,31 @@ namespace std { typedef type_info type_info; }
 using namespace cv;
 using namespace std;
 
-double Verify_Object(Mat Input_Object, Mat Backward_Path_Object, double dot_product_input_object){
-    double dot_product_transformations;
-    Backward_Path_Object.convertTo(Backward_Path_Object, CV_32FC1);
-    Input_Object.convertTo(Input_Object, CV_32FC1);
-    dot_product_transformations = Input_Object.dot(Backward_Path_Object)/ sqrt(Input_Object.dot(Input_Object)* Backward_Path_Object.dot(Backward_Path_Object));
+int Verify_Object(Mat Input_Object, Mat Backward_Path_Object, double dot_product_input_object){
+ //    double dot_product_transformations;
+ //    Backward_Path_Object.convertTo(Backward_Path_Object, CV_32FC1);
+ //    Input_Object.convertTo(Input_Object, CV_32FC1);
+ //    dot_product_transformations = Input_Object.dot(Backward_Path_Object)/ sqrt(Input_Object.dot(Input_Object)* Backward_Path_Object.dot(Backward_Path_Object));
     
-	//imshow("input", Input_Object);
-	//imshow("result", Backward_Path_Object);
-	//waitKey();
+	// //imshow("input", Input_Object);
+	// //imshow("result", Backward_Path_Object);
+	// //waitKey();
 
     if(dot_product_transformations < 0.2*dot_product_input_object){
         return 0;
     }
 
     return 1;
+
+    double correlation;
+    double delta = 0.1 * (Backward_Path_Object.total() / Input_Object.total()) * dot_product_input_object;
+    correlation = Input_Object.dot(Backward_Path_Object);
+
+    if (correlation < delta) {
+    	return 0;
+    } else {
+    	return 1;
+    }
 }
 
 Mat Learn_New_Transformation(Mat Input_Image, Mat Memory_Images, vector<int> row_size){

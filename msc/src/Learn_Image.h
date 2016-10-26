@@ -16,7 +16,7 @@
 #include<vector>
 using namespace cv;
 using namespace std;
-double Verify_Object(Mat, Mat, double);
+int Verify_Object(Mat, Mat, double);
 Mat Learn_New_Transformation(Mat, Mat, vector<int>);
 int UpdateLayers(int);
 Mat Image_Match(Mat, Mat);
