@@ -28,6 +28,8 @@
 using namespace std;
 using namespace cv;
 
+int offline = 0;
+
 int layer_count;
 
 //Mat affine_transformation;
@@ -44,9 +46,9 @@ bool scale_layer = 1;
 bool READFROMFILE =0;
 
 /* If not read the transformation from file, test all the possible parameters*/
-double xTranslate_step = 10;
-double yTranslate_step = 10;
-double rotate_step = 10;
+double xTranslate_step = 30;
+double yTranslate_step = 30;
+double rotate_step = 30;
 double scale_step = 5;
 
 vector<double> xT_val;
@@ -57,9 +59,9 @@ double maxscale_para = 1;	/*maximum scaling factor*/
 double minscale_para = 0.3;	/*minimum scaling factor*/
 
 /* k-step value*/
-double k_xTranslate = 0.8;
-double k_yTranslate = 0.8;
-double k_rotate = 0.4;
+double k_xTranslate = 0.6;
+double k_yTranslate = 0.6;
+double k_rotate = 0.2;
 double k_scale = 0.4;
 double k_memory = 0.25;
 
@@ -155,6 +157,10 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
         iteration_count--;
         //printf("About to call MSC %d\n",count++);
         ret = MapSeekingCircuit(Input_Image, Memory_Images, img_size, Fwd_Path, Bwd_Path, layer_count, transformation_set, &G, k_transformations);
+		if (offline) {
+			imshow("Backward Path", *Bwd_Path);
+			if (iteration_count % 10 == 0) waitKey(0);
+		}
         
 		bool flag = 1;		/* 1 for stopping the msc*/
         if(iteration_count %5 == 0){
@@ -199,6 +205,7 @@ int SL_MSC(Mat Input_Image, Mat Memory_Images, Size img_size, Mat *Fwd_Path, Mat
 				//double ang = 0;
 				//double sc = 1;
 				finalTrans = TransformationSet(xT, yT, ang, sc);
+				cout << "Iterations" << iteration_count << endl;
 				break;
 			}
         }
@@ -404,7 +411,8 @@ void *ForwardTransform(void* pargin) {
 			//vconcat(rotation_matrix, C, rotation_matrix);
 			warpAffine(In, dst, rotation_matrix, dst.size(), INTER_NEAREST);
 
-			Transc.at<float>(0, i) = (sqrt(double(countNonZero(In)) / double(countNonZero(dst))));
+			//Transc.at<float>(0, i) = (sqrt(double(countNonZero(In)) / double(countNonZero(dst))));
+			Transc.at<float>(0, i) = 2.0;
 
 			//imshow("In", In);
 			//imshow("dst", dst);

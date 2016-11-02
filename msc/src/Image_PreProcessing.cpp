@@ -15,6 +15,8 @@ using namespace std;
 in order to meet the requirement of real world image
 Zhangyuan 06/12/2016*/
 
+int debug = 0;
+
 
 Mat orientationMap(const cv::Mat& mag, const cv::Mat& ori, double thresh = 1.0)
 {
@@ -50,10 +52,15 @@ Mat CannyThreshold(Mat src_gray, int lowThreshold , int highThreshold )
     Mat detected_edges_img;
     
     Mat Sobel_Image;
-	src_gray = src_gray > 30;
+	src_gray = src_gray > 15;
+	if (debug) {
+		imshow("Canny In", src_gray);
+		waitKey(0);
+	}
+	
     GaussianBlur(src_gray, detected_edges, Size(5,5), sigmaX, sigmaY, BORDER_DEFAULT );
     
-    Canny( detected_edges, detected_edges_canny, lowThreshold, highThreshold, kernel_size );
+	Canny(detected_edges, detected_edges_canny, lowThreshold, highThreshold, kernel_size);
 
 	/*vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;

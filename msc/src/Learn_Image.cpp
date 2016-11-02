@@ -48,10 +48,15 @@ int Verify_Object(Mat Input_Object, Mat Backward_Path_Object, double dot_product
     return 1;*/
 
     double correlation;
-    double delta = 0.008 * (Backward_Path_Object.total() / Input_Object.total()) * dot_product_input_object;
+	double delta;
+	if (countNonZero(Input_Object))
+		delta = 0.2 * (countNonZero(Backward_Path_Object) / countNonZero(Input_Object)) * dot_product_input_object;
+	else delta = 0;
     correlation = Input_Object.dot(Backward_Path_Object);
+	cout << "Correlation: " << correlation << endl;
+	cout << "Delta: " << delta << endl;
 
-    if (correlation < delta) {
+    if (correlation < delta || correlation < 2) {
     	return 0;
     } else {
     	return 1;

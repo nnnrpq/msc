@@ -69,9 +69,9 @@ int main() {
 	templatePY.jpg is the manually generated image of letter P and Y*/
 
 	//Mat test = imread("apriltag0.png", CV_LOAD_IMAGE_GRAYSCALE);
-	Mat test = imread("img_1.png", CV_LOAD_IMAGE_GRAYSCALE);
+	//Mat test = imread("img_1.png", CV_LOAD_IMAGE_GRAYSCALE);
 	//Mat test = imread("templatePY.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-
+	Mat src = imread("js/logo20.png", CV_LOAD_IMAGE_GRAYSCALE);
 
 
 /*	This part is supposed to do dialation to the (PY) image, 
@@ -87,12 +87,12 @@ int main() {
 
 /* Enlarge the image by 1.5, and pad with zero,
 	to avoid the object from moving out of the frame in the random transformation step*/
-	test = padImageMatrix(test, round(test.rows*1.5), round(test.cols*1.5));
+	//test = padImageMatrix(test, round(test.rows*1.5), round(test.cols*1.5));
 	
 	/*step 1, generate random image*/
-	double theta, xtran, ytran, scale;
+	//double theta, xtran, ytran, scale;
 	//imshow("template", test);
-	Mat src = Rand_Transform(test, theta, xtran, ytran, scale,1);		/*src is the random transformed image*/
+	//src = Rand_Transform(src, theta, xtran, ytran, scale,1);		/*src is the random transformed image*/
 	//src = imread("b1.png", CV_LOAD_IMAGE_GRAYSCALE);
 
 	//src.convertTo(src, CV_32FC1, 1.0 / 255);
@@ -110,16 +110,16 @@ int main() {
 	Mat Edge_Detected_Image;
 	src_gray = src.clone();
 
-	Mat mem_img_gray = test;					/* use the original template image as memory image*/
+	//Mat mem_img_gray = src;					/* use the original template image as memory image*/
+	Mat mem_img_gray = imread("img_1.png", CV_LOAD_IMAGE_GRAYSCALE);
 	Mat mem_img_canny = CannyThreshold_MemoryImages(mem_img_gray);
 	Mat mem_img_edge(mem_img_canny.rows, mem_img_canny.cols, CV_32FC1);
 	threshold(mem_img_canny, mem_img_edge, Thresh_VAL, MAX_VAL, THRESH_BINARY);
-	img_size = mem_img_edge.size();
 	Mat Edge_Detected_Image_GrayScale;
 	Mat Edge_Detected_Image_unpadded(src_gray.rows, src_gray.cols, CV_32FC1);
 
-
-	do {
+	int ret;
+	//do {
 		if (count == 1)
 			t1 = clock();
 
@@ -129,14 +129,29 @@ int main() {
 		threshold(Edge_Detected_Image_GrayScale, Edge_Detected_Image_unpadded, Thresh_VAL, MAX_VAL, THRESH_BINARY);
 		Edge_Detected_Image_unpadded.convertTo(Edge_Detected_Image_unpadded, CV_32FC1);
 
+		/*int maxRows = Edge_Detected_Image_unpadded.rows;
+		int maxCols = Edge_Detected_Image_unpadded.cols;*/
+
+		int width = src.cols;
+		int height = src.rows;
 		int maxRows = Edge_Detected_Image_unpadded.rows;
 		int maxCols = Edge_Detected_Image_unpadded.cols;
-		if (maxRows < cropped_memory_images.rows) {
+		/*if (maxRows < cropped_memory_images.rows) {
 			maxRows = cropped_memory_images.rows;
 		}
 		if (maxCols < cropped_memory_images.cols) {
 			maxCols = cropped_memory_images.cols;
-		}
+		}*/
+
+		imshow("Input", Edge_Detected_Image_unpadded);
+		waitKey(0);
+		resize(Edge_Detected_Image_unpadded, Edge_Detected_Image_unpadded, Size(maxCols, maxRows));
+
+		Memory_Images = padImageMatrix(mem_img_edge, maxRows, maxCols);
+		img_size = Memory_Images.size();
+
+		imshow("Memory", Memory_Images);
+		waitKey(0);
 		
 
 		/* control whether or not to do the frame by frame optimization*/
@@ -144,17 +159,17 @@ int main() {
 			finalTrans.nonIdenticalCount = -1;
 
 		/* do MSC*/
-		int ret = SL_MSC(Edge_Detected_Image_unpadded, mem_img_edge, img_size, &Fwd_Image, &Bwd_Image, finalTrans);
+		ret = SL_MSC(Edge_Detected_Image_unpadded, Memory_Images, img_size, &Fwd_Image, &Bwd_Image, finalTrans);
 		
 		//printf("The return value of SL_MSC is %d\n", ret);
 
 
 		/* check the result of msc and update image*/
 		flag = finalTrans.nonIdenticalCount != 0;
-		printf("the target xtran is %f, msc result is %f\n", xtran, finalTrans.xTranslate);
-		printf("the target ytran is %f, msc result is %f\n", ytran, finalTrans.yTranslate);
-		printf("the target theta is %f, msc result is %f\n", theta, finalTrans.theta);
-		printf("the target scale is %f, msc result is %f\n", scale, finalTrans.scale);
+		printf("x-tran msc result is %f\n", finalTrans.xTranslate);
+		printf("y-tran msc result is %f\n", finalTrans.yTranslate);
+		printf("rot msc result is %f\n", finalTrans.theta);
+		printf("scale msc result is %f\n", finalTrans.scale);
 
 		// Get the returned address Images.
 		//imshow("Forward Path", Fwd_Image * 255);
@@ -164,29 +179,30 @@ int main() {
 		}
 
 
-		if (abs(xtran - finalTrans.xTranslate) / img_size.width < th && abs(ytran - finalTrans.yTranslate) / img_size.height < th&&
+		/*if (abs(xtran - finalTrans.xTranslate) / img_size.width < th && abs(ytran - finalTrans.yTranslate) / img_size.height < th&&
 			abs(scale - finalTrans.scale) < th && abs(theta - finalTrans.theta) / 180 < th) {
 			printf("MSC is right\n");
 		}
 		else {
 			printf("MSC is wrong\n");
 			flag = 0;
-		}
+		}*/
 
 		/* update image*/
-		xtran = xtran*mul;
+		/*xtran = xtran*mul;
 		ytran = ytran*mul;
 		scale = 1 - (1 - scale)*mul;
 		theta = theta*mul;
 		src_gray = Rand_Transform(test, theta, xtran, ytran, scale, 2);
 
 		count++;
-	} while (count<maxiter);
+	} while (count<maxiter);*/
 	t2 = clock();
 
 //	_CrtDumpMemoryLeaks();
 	printf("MSC is done\n");
 	printf("time for %d iterations is %d\n", count, t2 - t1);
+	printf("Correlation Value: %d", ret);
 
 	getchar();
 

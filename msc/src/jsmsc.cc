@@ -69,7 +69,7 @@ void DroneControl(Mat src, Mat mem, TransformationSet finalTrans, Isolate* isola
 	height = src.rows;
 	
 	int maxRows = Edge_Detected_Image_unpadded.rows;
-	int maxCols = Edge_Detected_Image_unpadded.cols*width/height;
+	int maxCols = Edge_Detected_Image_unpadded.cols;
 
 	Mat Memory_Images = padImageMatrix(mem_img_edge, maxRows, maxCols);
 
@@ -79,8 +79,8 @@ void DroneControl(Mat src, Mat mem, TransformationSet finalTrans, Isolate* isola
 
 	int ret = SL_MSC(Edge_Detected_Image_unpadded, Memory_Images, img_size, &Fwd_Image, &Bwd_Image, finalTrans);
 
-	//finalTrans.xTranslate /= finalTrans.scale;
-	//finalTrans.yTranslate /= finalTrans.scale;
+	finalTrans.xTranslate *= finalTrans.scale;
+	finalTrans.yTranslate *= finalTrans.scale;
 
 	/* Following lines set the field of returned object in js */
 	if (finalTrans.xTranslate<-0.1*maxCols) {
